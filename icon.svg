@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#141414"/>
+  <rect x="86" y="0" width="34" height="512" fill="#f6f5f1"/>
+  <circle cx="103" cy="140" r="34" fill="#141414" stroke="#f6f5f1" stroke-width="18"/>
+  <circle cx="103" cy="372" r="34" fill="#141414" stroke="#f6f5f1" stroke-width="18"/>
+  <circle cx="300" cy="256" r="150" fill="#f2b705"/>
+  <text x="300" y="300" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="128" letter-spacing="-4" fill="#141414">HR</text>
+</svg>
