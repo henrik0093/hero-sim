@@ -55,8 +55,8 @@ function tone(f,d,type,v,slide){if(!AC)return;try{const o=AC.createOscillator(),
 function toast(t,c){const e=$('toast');e.textContent=t;e.style.color=c||'#fff';e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,900)}
 
 const WS=2300;
-const TYPES=[{e:'🎁',r:9,v:1,n:150},{e:'⛄',r:15,v:3,n:90},{e:'🎄',r:25,v:7,n:70},{e:'🚜',r:36,v:14,n:34},{e:'🏠',r:52,v:28,n:22},{e:'⛪',r:74,v:55,n:9},{e:'🏰',r:100,v:110,n:4}];
-const SPR=TYPES.map(t=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.font='100px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(t.e,64,70);return c});
+const TYPES=[{e:'🍪',r:8,v:1,n:110},{e:'🍺',r:11,v:2,n:80},{e:'🍸',r:14,v:3,n:60},{e:'🍷',r:17,v:4,n:50},{e:'🎄',r:25,v:7,n:60},{e:'🛷',r:34,v:13,n:30},{e:'🦌',r:44,v:20,n:22},{e:'🛖',r:56,v:32,n:16},{e:'⛪',r:76,v:58,n:8},{e:'🎡',r:100,v:110,n:4}];
+const SPR=TYPES.map(t=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.font='200px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(t.e,128,140);return c});
 let O,Hs,pl,time,state='menu',zoom=1,shake=0,jx=0,jy=0,down=false,ox0=0,oy0=0,stage=0;
 const radius=m=>17+Math.sqrt(m)*3.1;
 function rndPos(){return [60+Math.random()*(WS-120),60+Math.random()*(WS-120)]}
@@ -79,9 +79,14 @@ function botThink(h){
   for(let k=0;k<70;k++){const o=O[Math.floor(Math.random()*O.length)];if(o.eat||o.r>=h.R*.8)continue;const d=Math.hypot(o.x-h.x,o.y-h.y);const s=TYPES[o.t].v*14-d;if(s>bs){bs=s;bx=o.x;by=o.y}}
   h.tx=bx;h.ty=by;
 }
+const API='https://cfenuthulbpndrqboimq.supabase.co/functions/v1/baumshow',T0=performance.now();
+async function sendScore(game,score){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,score,level:1,duration_ms:Math.round(performance.now()-T0),game})});const j=await r.json();let b=j.board;if(!b)b=await (await fetch(API+'?game='+game,{cache:'no-store'})).json();
+  const l=b.best||[],top=l[0],mine=l.find(x=>x.player===me);if(!top)return '';const nm=(PEOPLE.find(p=>p.id===top.player)||{}).name||'';
+  return top.player===me?'👑 Du führst die Wochen-Rangliste!':'👑 '+nm+' führt mit '+top.score.toLocaleString('de-DE')+'. Dir fehlen '+(top.score-(mine?mine.score:0)+1).toLocaleString('de-DE')+'.'}catch(e){return ''}}
+function netLine(game,score){sendScore(game,score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML+='<br><b style="color:#ffd54a">'+m+'</b>'},1200))}
 function end(why){
   if(state!=='play')return;state='over';const pts=Math.round(pl.m);
-  const bk='bb_loch_best_'+me,old=lsGet(bk,0);if(pts>old)lsSet(bk,pts);
+  const bk='bb_loch_best_'+me,old=lsGet(bk,0);if(pts>old)lsSet(bk,pts);netLine('loch',pts);
   const rk=Hs.slice().sort((a,b)=>b.m-a.m).indexOf(pl)+1;
   setTimeout(()=>{$('hud').classList.add('hidden');$('next').classList.add('hidden');$('over').classList.remove('hidden');$('oWhy').textContent=why;$('oPts').textContent=pts.toLocaleString('de-DE');
     $('oSub').textContent='Platz '+rk+' von 8 · '+pl.eaten+' Löcher geschluckt';$('oBest').textContent=pts>old?'Neuer Rekord!':'Dein Rekord: '+old.toLocaleString('de-DE')},900);
@@ -90,7 +95,7 @@ cv.addEventListener('pointerdown',e=>{audioOn();down=true;ox0=e.clientX;oy0=e.cl
 cv.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-ox0,dy=e.clientY-oy0,d=Math.hypot(dx,dy);if(d>6){const k=Math.min(1,d/50);jx=dx/d*k;jy=dy/d*k}if(d>70){ox0=e.clientX-dx/d*70;oy0=e.clientY-dy/d*70}});
 ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{down=false}));
 
-const STAGE=[[25,'Tannen sind dran! 🎄'],[80,'Trecker passen rein! 🚜'],[200,'Jetzt die Häuser! 🏠'],[480,'Die Kirche wackelt! ⛪'],[900,'DIE BURG! 🏰']];
+const STAGE=[[8,'Bier passt rein! 🍺'],[25,'Tannenbäume sind dran! 🎄'],[70,'Schlitten und Rentiere! 🛷'],[240,'Jetzt die Glühweinbuden! 🛖'],[500,'Die Kirche wackelt! ⛪'],[900,'DAS RIESENRAD! 🎡']];
 let last=performance.now(),hudT=0;
 function frame(now){
   let dt=Math.min(.05,(now-last)/1000);last=now;
@@ -105,9 +110,9 @@ function frame(now){
     }
     for(const o of O){
       if(o.eat){const h=o.eat;o.s-=dt*4;o.x+=(h.x-o.x)*Math.min(1,dt*12);o.y+=(h.y-o.y)*Math.min(1,dt*12);
-        if(o.s<=0){const t=o.t<3?o.t:(Math.random()<.5?o.t:Math.floor(Math.random()*3));const [x,y]=rndPos();o.x=x;o.y=y;o.t=t;o.r=TYPES[t].r;o.eat=null;o.s=1}continue}
+        if(o.s<=0){const t=o.t<5?o.t:(Math.random()<.5?o.t:Math.floor(Math.random()*5));const [x,y]=rndPos();o.x=x;o.y=y;o.t=t;o.r=TYPES[t].r;o.eat=null;o.s=1}continue}
       for(const h of Hs){if(h.dead>0||o.r>=h.R*.8)continue;const dx=o.x-h.x,dy=o.y-h.y;if(dx*dx+dy*dy<(h.R-o.r*.35)**2){o.eat=h;grow(h,TYPES[o.t].v);
-        if(h===pl){if(now-lastTone>50){lastTone=now;tone(300+Math.min(900,TYPES[o.t].v*14),.07,'sine',.05,180)}if(o.t>=4){shake=6+o.t*2;toast('+'+TYPES[o.t].v+' '+TYPES[o.t].e,'#ffd54a')}}break}}
+        if(h===pl){if(now-lastTone>50){lastTone=now;tone(300+Math.min(900,TYPES[o.t].v*14),.07,'sine',.05,180)}if(o.t>=6){shake=4+o.t*1.6;toast('+'+TYPES[o.t].v+' '+TYPES[o.t].e,'#ffd54a')}}break}}
     }
     for(const a of Hs){if(a.dead>0)continue;for(const b of Hs){if(a===b||b.dead>0||time>82||a.R<=b.R*1.1)continue;const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<a.R-b.R*.4){grow(a,b.m*(a.bot?.25:.5)+(a.bot?5:12));a.eaten++;
       if(b===pl){shake=16;tone(140,.6,'sawtooth',.1,40);b.dead=99;end(a.name+' hat dich verschluckt.')}else{b.dead=2.5;if(a===pl){toast(b.name+' verschluckt!','#7dffb0');tone(250,.3,'square',.08,800);shake=10}}}}}

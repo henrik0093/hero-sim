@@ -130,15 +130,20 @@ function step(e,dt){
     const cx=Math.floor(e.x),cy=Math.floor(e.y);if(cx!==e.cx||cy!==e.cy){e.cx=cx;e.cy=cy;enter(e,cx,cy)}
   }
 }
+const API='https://cfenuthulbpndrqboimq.supabase.co/functions/v1/baumshow',T0=performance.now();
+async function sendScore(game,score){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,score,level:1,duration_ms:Math.round(performance.now()-T0),game})});const j=await r.json();let b=j.board;if(!b)b=await (await fetch(API+'?game='+game,{cache:'no-store'})).json();
+  const l=b.best||[],top=l[0],mine=l.find(x=>x.player===me);if(!top)return '';const nm=(PEOPLE.find(p=>p.id===top.player)||{}).name||'';
+  return top.player===me?'👑 Du führst die Wochen-Rangliste!':'👑 '+nm+' führt mit '+top.score.toLocaleString('de-DE')+'. Dir fehlen '+(top.score-(mine?mine.score:0)+1).toLocaleString('de-DE')+'.'}catch(e){return ''}}
+function netLine(game,score){sendScore(game,score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML+='<br><b style="color:#ffd54a">'+m+'</b>'},1200))}
 function end(why){
   if(state!=='play')return;state='over';
   const pct=Math.max(best,count(0)*100/TOT),score=Math.round(pct*10+pl.kills*50);
   const bk='bb_arena_best_'+me,old=lsGet(bk,0);if(pct>old)lsSet(bk,Math.round(pct*10)/10);
-  const sk='bb_arena_score_'+me,os=lsGet(sk,0);if(score>os)lsSet(sk,score);
+  const sk='bb_arena_score_'+me,os=lsGet(sk,0);if(score>os)lsSet(sk,score);netLine('arena',Math.min(1000,Math.round(pct*10)));
   setTimeout(()=>{$('hud').classList.add('hidden');$('over').classList.remove('hidden');
     $('oWhy').textContent=why;$('oPct').textContent=pct.toFixed(1).replace('.',',')+' %';
     $('oSub').textContent=pl.kills+' Rauswürfe · '+score+' Punkte'+(score>os?' (Rekord!)':'');
-    $('oBest').textContent=(pct>old?'Neuer Gebiets-Rekord! ':'Dein Rekord: '+String(old).replace('.',',')+' %. ')+(Math.max(pct,old)>=25?'Modus 3 ist freigeschaltet.':'Ab 25 % schaltet sich Modus 3 frei.')},1000);
+    $('oBest').textContent=(pct>old?'Neuer Gebiets-Rekord! ':'Dein Rekord: '+String(old).replace('.',',')+' %. ')},1000);
 }
 let down=false,jx0=0,jy0=0,jx=0,jy=0;
 cv.addEventListener('pointerdown',e=>{audioOn();down=true;jx0=jx=e.clientX;jy0=jy=e.clientY});
