@@ -257,11 +257,15 @@ const ASP={"henrik": 0.623, "alica": 0.658, "eric": 0.58, "sophia": 0.658, "fred
 const ASPB={"henrik":0.572,"alica":0.645,"eric":0.641,"sophia":0.672,"fred":0.598,"selina":0.672,"jerome":0.625,"moni":0.555};
 const TL=new THREE.TextureLoader(),FIGTEX={};
 function figTex(id,back){const k=(back?'b_':'f_')+id;if(!FIGTEX[k]){const t=TL.load('img/'+k+'.png');t.colorSpace=THREE.SRGBColorSpace;FIGTEX[k]=t}return FIGTEX[k]}
+const ASPR={'henrik':0.437,'alica':0.413,'eric':0.44,'sophia':0.4,'fred':0.43,'selina':0.413,'jerome':0.433,'moni':0.387};
+function makeRunner(id){const t=TL.load('img/r_'+id+'.png');t.colorSpace=THREE.SRGBColorSpace;t.repeat.set(1/8,1);
+  const a=ASPR[id],g=new THREE.Group(),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.05}));
+  sp.center.set(.5,.02);sp.scale.set(2.1*a,2.1,1);g.add(sp);g.userData={sp,h:2.1,a,frames:8};return g}
 function makeChar(id,back){
   const a=(back?ASPB:ASP)[id],g=new THREE.Group(),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:figTex(id,back),transparent:true,alphaTest:.05}));
   sp.center.set(.5,.02);sp.scale.set(2.1*a,2.1,1);g.add(sp);g.userData={sp,h:2.1,a};return g;
 }
-function animChar(c,t,run,lean){const u=c.userData,q=run?Math.abs(Math.sin(t)):0;u.sp.material.rotation=-(lean||0)*.35+(run?Math.sin(t)*.09:0);u.sp.scale.set(u.h*u.a*(1+q*.06),u.h*(1-q*.06),1)}
+function animChar(c,t,run,lean){const u=c.userData;if(u.frames){u.sp.material.rotation=-(lean||0)*.3;u.sp.material.map.offset.x=(run?Math.floor(performance.now()/(G?Math.max(48,78/Math.max(.5,G.speedMul)):80))%8:0)/8;return}const q=run?Math.abs(Math.sin(t)):0;u.sp.material.rotation=-(lean||0)*.35+(run?Math.sin(t)*.09:0);u.sp.scale.set(u.h*u.a*(1+q*.06),u.h*(1-q*.06),1)}
 const BORN=new Float32Array(220);let prevCnt=0,camX=0,baseFov=55;
 const SHOTS=[];let shotMesh=null;
 const SLOT=[];for(let i=0;i<MAXU;i++){const r=.36*Math.sqrt(i+1.5),a=i*2.39996;SLOT.push([Math.cos(a)*r*.78,Math.sin(a)*r*.9+r*.35])}
@@ -271,7 +275,7 @@ function buildPlayer(){
   if(leader)scene.remove(leader);
   const col=P[me].color;
   unitMesh=new THREE.InstancedMesh(wichtelGeo(col),VC,MAXU);unitMesh.count=0;unitMesh.frustumCulled=false;unitMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(unitMesh);
-  leader=makeChar(me,true);leader.userData.sp.material.depthTest=false;leader.userData.sp.renderOrder=10;leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
+  leader=makeRunner(me);leader.userData.sp.material.depthTest=false;leader.userData.sp.renderOrder=10;leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
   for(let i=0;i<MAXU;i++){UX[i]=SLOT[i][0];UZ[i]=LEAD_Z+SLOT[i][1]}
 }
 function buildActors(){
@@ -556,7 +560,7 @@ function syncInstances(dt,now){
     const N=G?Math.round(G.Nshow):22,cx=G?G.cx:0,rush=G?G.rush:0,run=!G||G.state==='run'||G.state==='storm';
     const cnt=Math.max(0,Math.min(MAXU,N-1));const tt=now/1000;
     leader.visible=N>=1;const lean=G?Math.max(-1,Math.min(1,(G.tx-G.cx)*.6)):0,pop=G?G.pop:0;
-    leader.position.set(cx,run?Math.abs(Math.sin(tt*14))*.22:0,LEAD_Z-rush*.6);leader.scale.setScalar(2.25*(1+pop*.2));animChar(leader,tt*14,run,lean);
+    leader.position.set(cx,run?Math.abs(Math.sin(tt*13))*.1:0,LEAD_Z-rush*.6);leader.scale.setScalar(2.25*(1+pop*.2));animChar(leader,tt*14,run,lean);
     for(let i=prevCnt;i<cnt;i++){BORN[i]=0;UX[i]=cx;UZ[i]=LEAD_Z}prevCnt=cnt;
         for(let i=0;i<cnt;i++){
       const tx=Math.max(-5.2,Math.min(5.2,cx+SLOT[i][0])),tz=LEAD_Z+SLOT[i][1]-rush*(1+(i%5)*.12);
