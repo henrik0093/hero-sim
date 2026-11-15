@@ -141,7 +141,7 @@ let me=lsGet('bb_me',null);if(me&&!P[me])me=null;
 let myBest=lsGet('bb_best4',0);
 const winsKey=()=>'bb_wins_'+me;let wins={};
 let board=lsGet('bb_board',{best:[],today:[],games:{}});
-const IMG={},PORTRAIT={};
+const IMG={},PORTRAIT=Object.fromEntries(PEOPLE.map(p=>[p.id,'img/h_'+p.id+'.png']));
 function avHTML(id){const p=P[id];return PORTRAIT[id]?'<span class="av" style="background-image:url('+PORTRAIT[id]+');background-color:'+p.color+'"></span>':'<span class="av" style="background:'+p.color+'">'+p.name[0]+'</span>'}
 
 // ================= Three Setup =================
@@ -238,37 +238,14 @@ const LOOK={
  jerome:{skin:'#efc3a2',hair:'#5a4030',style:'quiff',beard:'full'},
  moni:{skin:'#f0c5a5',hair:'#5a3a26',style:'pony',glasses:1},
 };
+const ASP={"henrik": 0.623, "alica": 0.658, "eric": 0.58, "sophia": 0.658, "fred": 0.658, "selina": 0.648, "jerome": 0.605, "moni": 0.656};
+const TL=new THREE.TextureLoader(),FIGTEX={};
+function figTex(id){if(!FIGTEX[id]){const t=TL.load('img/f_'+id+'.png');t.colorSpace=THREE.SRGBColorSpace;FIGTEX[id]=t}return FIGTEX[id]}
 function makeChar(id){
-  const L=LOOK[id],col=P[id].color,g=new THREE.Group();
-  const parts=[
-    tint(T(new THREE.CapsuleGeometry(.33,.42,3,10),0,1.02,0),col),
-    tint(T(new THREE.CylinderGeometry(.3,.3,.12,12),0,1.42,0),'#ffffff'),
-    tint(T(new THREE.SphereGeometry(.34,14,10),0,1.8,0),L.skin),
-    tint(T(new THREE.SphereGeometry(.05,6,4),-.12,1.8,-.31),'#222'),
-    tint(T(new THREE.SphereGeometry(.05,6,4),.12,1.8,-.31),'#222'),
-    tint(T(new THREE.BoxGeometry(.16,.035,.03),0,1.66,-.325),'#b0503f'),
-    tint(T(R(new THREE.SphereGeometry(.365,14,8,0,Math.PI*2,0,Math.PI*.5),.5,0,0),0,1.83,.03),L.hair),
-  ];
-  if(L.style==='long')parts.push(tint(T(new THREE.BoxGeometry(.62,.9,.2),0,1.4,.28),L.hair),tint(T(new THREE.BoxGeometry(.14,.6,.3),-.33,1.5,.08),L.hair),tint(T(new THREE.BoxGeometry(.14,.6,.3),.33,1.5,.08),L.hair));
-  if(L.style==='bob')parts.push(tint(T(new THREE.BoxGeometry(.66,.5,.22),0,1.62,.26),L.hair),tint(T(new THREE.BoxGeometry(.13,.42,.34),-.34,1.66,.06),L.hair),tint(T(new THREE.BoxGeometry(.13,.42,.34),.34,1.66,.06),L.hair));
-  if(L.style==='pony')parts.push(tint(T(new THREE.SphereGeometry(.15,8,6),0,1.95,.38),L.hair),tint(T(R(new THREE.CapsuleGeometry(.09,.4,2,8),.5,0,0),0,1.62,.5),L.hair));
-  if(L.style==='quiff')parts.push(tint(T(new THREE.BoxGeometry(.44,.16,.36),0,2.16,-.1),L.hair));
-  if(L.beard){const full=L.beard==='full';const bc=full?new THREE.Color(L.hair):new THREE.Color(L.skin).lerp(new THREE.Color(L.hair),.4);
-    parts.push(tint(T(new THREE.SphereGeometry(full?.37:.348,14,8,Math.PI,Math.PI,Math.PI*.6,Math.PI*.4),0,1.8,0),bc))}
-  if(L.glasses)parts.push(tint(T(new THREE.BoxGeometry(.17,.1,.04),-.11,2.14,-.2),'#222'),tint(T(new THREE.BoxGeometry(.17,.1,.04),.11,2.14,-.2),'#222'));
-  const body=new THREE.Mesh(merge(parts),VCs);body.castShadow=true;g.add(body);
-  const limb=(x,y,r,len,c,endc)=>{const pv=new THREE.Group();pv.position.set(x,y,0);const m=new THREE.Mesh(merge([tint(T(new THREE.CapsuleGeometry(r,len,2,8),0,-len/2-r*.4,0),c),tint(T(new THREE.SphereGeometry(r*1.2,8,6),0,-len-r,0),endc)]),VCs);m.castShadow=true;pv.add(m);g.add(pv);return pv};
-  g.userData={aL:limb(-.43,1.32,.095,.38,col,L.skin),aR:limb(.43,1.32,.095,.38,col,L.skin),lL:limb(-.16,.7,.12,.36,'#2b3445','#3a2a1a'),lR:limb(.16,.7,.12,.36,'#2b3445','#3a2a1a')};
-  return g;
+  const g=new THREE.Group(),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:figTex(id),transparent:true,alphaTest:.05}));
+  sp.center.set(.5,.02);sp.scale.set(2.1*ASP[id],2.1,1);g.add(sp);g.userData={sp,h:2.1,a:ASP[id]};return g;
 }
-function animChar(c,t,run){const u=c.userData,s=run?Math.sin(t):0;u.lL.rotation.x=s*.95;u.lR.rotation.x=-s*.95;u.aL.rotation.x=-s*.85;u.aR.rotation.x=s*.85}
-function makePortraits(){
-  const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#ffffff','#9999aa',1.7));const dl=new THREE.DirectionalLight('#ffffff',1.4);dl.position.set(-2,3,-4);sc.add(dl);
-  const cam=new THREE.PerspectiveCamera(30,1,.1,20);cam.position.set(.5,1.95,-2.3);cam.lookAt(0,1.76,0);
-  const old=renderer.getPixelRatio();renderer.setPixelRatio(1);renderer.setSize(160,160,false);
-  for(const p of PEOPLE){const c=makeChar(p.id);sc.add(c);sc.background=new THREE.Color(p.color).lerp(new THREE.Color('#ffffff'),.5);renderer.render(sc,cam);PORTRAIT[p.id]=canvas.toDataURL('image/png');sc.remove(c)}
-  renderer.setPixelRatio(old);
-}
+function animChar(c,t,run,lean){const u=c.userData,q=run?Math.abs(Math.sin(t)):0;u.sp.material.rotation=-(lean||0)*.35+(run?Math.sin(t)*.09:0);u.sp.scale.set(u.h*u.a*(1+q*.06),u.h*(1-q*.06),1)}
 const BORN=new Float32Array(220);let prevCnt=0,camX=0,baseFov=55;
 const SHOTS=[];let shotMesh=null;
 const SLOT=[];for(let i=0;i<MAXU;i++){const r=.36*Math.sqrt(i+1.5),a=i*2.39996;SLOT.push([Math.cos(a)*r*.78,Math.sin(a)*r*.9+r*.35])}
@@ -321,7 +298,7 @@ function makeCastle(boss){
     for(const sx of [-1,1]){parts.push(tint(T(new THREE.CylinderGeometry(1.15,1.25,4.6,14),sx*3.8,2.3,0),dark));parts.push(tint(T(new THREE.ConeGeometry(1.45,2,14),sx*3.8,5.6,0),roof));parts.push(tint(T(new THREE.SphereGeometry(.2,8,6),sx*3.8,6.7,0),gold))}
     castleGeo=merge(parts)}
   const g=new THREE.Group();const body=new THREE.Mesh(castleGeo,castleMat);body.castShadow=true;g.add(body);
-  const gd=makeChar(boss);gd.scale.setScalar(2.3);gd.position.set(0,3.8,0);gd.rotation.y=Math.PI;g.add(gd);g.userData={guard:gd,body};return g;
+  const gd=makeChar(boss);gd.scale.setScalar(2.2);gd.position.set(0,3.75,.2);g.add(gd);g.userData={guard:gd,body};return g;
 }
 function opText(o){return o.k==='add'?'+'+o.v:o.k==='mul'?'x'+o.v:o.k==='sub'?'−'+o.v:'÷'+o.v}
 function opApply(n,o){return o.k==='add'?n+o.v:o.k==='mul'?n*o.v:o.k==='sub'?Math.max(0,n-o.v):Math.floor(n/o.v)}
@@ -510,14 +487,14 @@ function update(dt){
   for(let i=G.rows.length-1;i>=0;i--){const r=G.rows[i],rel=r.d-G.d;
     r.grp.position.z=LEAD_Z-rel;r.grp.visible=rel<122;
     if(r.type==='enemy'){for(const m of r.meshes)if(m){m.userData.im.position.y=Math.abs(Math.sin(G.t*9+r.d))*.2;m.position.z=rel<16?(16-rel)*.22:0}}
-    if(r.type==='castle'){const gd=r.castle.userData.guard;if(gd.userData.fly!=null){gd.userData.fly-=24*dt;gd.position.y+=gd.userData.fly*dt;gd.position.z-=9*dt;gd.rotation.x+=dt*9}else{gd.position.y=3.8+Math.abs(Math.sin(G.t*5))*.25;gd.userData.aR.rotation.x=Math.PI+Math.sin(G.t*11)*.5;gd.userData.aL.rotation.x=Math.PI+Math.cos(G.t*11)*.5}}
+    if(r.type==='castle'){const gd=r.castle.userData.guard;if(gd.userData.fly!=null){gd.userData.fly-=24*dt;gd.position.y+=gd.userData.fly*dt;gd.position.z-=9*dt;gd.userData.sp.material.rotation+=dt*9}else{gd.position.y=3.75+Math.abs(Math.sin(G.t*5))*.3;animChar(gd,G.t*5,true,0)}}
     if(r.type==='ball'){r.ball.position.x=Math.sin(G.t*r.w+r.ph)*3.7;r.ball.rotation.z=-r.ball.position.x*.7}
     if(r.type==='gate')for(const p of r.panels){p.flash=Math.max(0,p.flash-dt*4);p.mat.opacity=.5+p.flash*.4;p.grp.scale.setScalar(1+p.flash*.08)}
     if(!r.done&&G.state==='run'){
       if(r.type==='castle'){if(rel<=13){r.done=true;G.state='storm';G.timer=0;G.N0=G.N;G.H0=G.base.hp;SHOTS.length=0;tone(300,.4,'square',.06,null,0,700);banner('STURM!','')}}
       else if(rel<=0){r.done=true;if(r.type!=='sign'&&r.type!=='church')trigger(r);if(G.state==='over')return}
     }
-    if(rel<-5&&r.type!=='castle'){lvl.remove(r.grp);G.rows.splice(i,1)}
+    if(rel<-18&&r.type!=='castle'){lvl.remove(r.grp);G.rows.splice(i,1)}
   }
   if(G.state==='storm'){
     G.playMs+=dt*1000;G.timer+=dt;const p=Math.min(1,G.timer/1.5),H=G.H0,hit=Math.min(G.N0,H);
@@ -547,7 +524,7 @@ function syncInstances(dt,now){
     const N=G?Math.round(G.Nshow):22,cx=G?G.cx:0,rush=G?G.rush:0,run=!G||G.state==='run'||G.state==='storm';
     const cnt=Math.max(0,Math.min(MAXU,N-1));const tt=now/1000;
     leader.visible=N>=1;const lean=G?Math.max(-1,Math.min(1,(G.tx-G.cx)*.6)):0,pop=G?G.pop:0;
-    leader.position.set(cx,run?Math.abs(Math.sin(tt*14))*.22:0,LEAD_Z-rush*.6);leader.rotation.z=-lean*.4;leader.rotation.y=-lean*.55;leader.scale.setScalar(1.75*(1+pop*.22));animChar(leader,tt*14,run);
+    leader.position.set(cx,run?Math.abs(Math.sin(tt*14))*.22:0,LEAD_Z-rush*.6);leader.scale.setScalar(1.75*(1+pop*.22));animChar(leader,tt*14,run,lean);
     for(let i=prevCnt;i<cnt;i++){BORN[i]=0;UX[i]=cx;UZ[i]=LEAD_Z}prevCnt=cnt;
         for(let i=0;i<cnt;i++){
       const tx=Math.max(-5.2,Math.min(5.2,cx+SLOT[i][0])),tz=LEAD_Z+SLOT[i][1]-rush*(1+(i%5)*.12);
@@ -666,7 +643,7 @@ $('toMenu').onclick=()=>showScreen('start');
 
 // ================= Start =================
 await document.fonts.load('700 64px Fredoka').catch(()=>{});
-makePortraits();buildWorld();buildActors();resize();
+buildWorld();buildActors();resize();
 if(!me)showScreen('who');else showScreen('start');
 setInterval(()=>{if(!G)fetchBoard()},30000);
 requestAnimationFrame(loop);
