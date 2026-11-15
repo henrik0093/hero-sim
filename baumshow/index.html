@@ -85,6 +85,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 .card b{display:block;font-size:19px}
 .card small{font-size:14px;opacity:.75;font-weight:500}
 </style>
+<script src="snd/xmas.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
@@ -290,16 +291,16 @@ function buildPlayer(){
   if(leader)scene.remove(leader);
   const col=P[me].color;
   unitMesh=new THREE.InstancedMesh(wichtelGeo(col),VC,MAXU);unitMesh.count=0;unitMesh.frustumCulled=false;unitMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(unitMesh);
-  leader=makeRunner(me);leader.userData.sp.material.depthTest=false;leader.userData.sp.renderOrder=10;leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
+  if(shotMesh){shotMesh.material.map=emojiTex(ITEM[me]);shotMesh.material.needsUpdate=true}leader=makeRunner(me);leader.userData.sp.material.depthTest=false;leader.userData.sp.renderOrder=10;leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
   for(let i=0;i<MAXU;i++){UX[i]=SLOT[i][0];UZ[i]=LEAD_Z+SLOT[i][1]}
 }
 function buildActors(){
   kGeo=krampusGeo();
   partMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,.16,.16),new THREE.MeshBasicMaterial(),MAXP);partMesh.count=0;partMesh.frustumCulled=false;
   partMesh.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(MAXP*3),3);scene.add(partMesh);
-  shotMesh=new THREE.InstancedMesh(new THREE.SphereGeometry(.26,8,6),new THREE.MeshBasicMaterial({color:'#ffc400'}),90);shotMesh.count=0;shotMesh.frustumCulled=false;scene.add(shotMesh);
+  shotMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1.25,1.25),new THREE.MeshBasicMaterial({map:emojiTex('⚪'),transparent:true,alphaTest:.25,side:THREE.DoubleSide}),90);shotMesh.count=0;shotMesh.frustumCulled=false;scene.add(shotMesh);
   for(let i=0;i<3;i++){const mk=new THREE.Mesh(new THREE.PlaneGeometry(3.3,5.5),new THREE.MeshBasicMaterial({color:'#ff2d4a',transparent:true,opacity:.5,depthWrite:false}));mk.rotation.x=-Math.PI/2;mk.position.set(LX[i],.04,LEAD_Z);mk.visible=false;scene.add(mk);
-    const ball=new THREE.Mesh(new THREE.SphereGeometry(1.15,14,10),new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.9,flatShading:true}));ball.visible=false;ball.castShadow=true;scene.add(ball);ATK.push({mk,ball,on:false,t:0,dur:1,lane:i})}
+    const ball=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex('⚪'),transparent:true,depthWrite:false}));ball.scale.set(3.2,3.2,1);ball.visible=false;scene.add(ball);ATK.push({mk,ball,on:false,t:0,dur:1,lane:i})}
 }
 
 // ---------- Texturen / Sprites ----------
@@ -322,6 +323,11 @@ function textTex(txt,opt={}){const c=document.createElement('canvas');c.width=op
   if(opt.sub){g.fillText(txt,c.width/2,c.height*.4);g.font='600 '+Math.round((opt.size||88)*.42)+'px Fredoka, sans-serif';g.fillText(opt.sub,c.width/2,c.height*.76)}
   else g.fillText(txt,c.width/2,c.height/2+6);
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const ITEM={henrik:'🥔',eric:'🔩',moni:'🐈',sophia:'🦒',fred:'🐖',selina:'⚪',alica:'⚪',jerome:'⚪'},EMT={};
+function emojiTex(e){if(EMT[e])return EMT[e];const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  if(e==='⚪'){const gr=g.createRadialGradient(52,48,6,64,64,54);gr.addColorStop(0,'#ffffff');gr.addColorStop(1,'#cfe2ff');g.fillStyle=gr;g.beginPath();g.arc(64,64,52,0,7);g.fill();g.lineWidth=6;g.strokeStyle='#7fa6e0';g.stroke()}
+  else{g.font='100px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(e,64,72)}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return EMT[e]=t}
 function dynTex(opt={}){const c=document.createElement('canvas');c.width=opt.w||256;c.height=opt.h||128;const g=c.getContext('2d');const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
   t.userData={set(txt){txt=String(txt);g.clearRect(0,0,c.width,c.height);
     if(opt.bg){g.fillStyle=opt.bg;g.beginPath();g.roundRect(6,6,c.width-12,c.height-12,opt.rad??(c.height/2-6));g.fill();if(opt.border){g.lineWidth=8;g.strokeStyle=opt.border;g.stroke()}}
@@ -437,7 +443,7 @@ function startLevel(){
   clearLevel();G.rows=[];
   const L=G.level,boss=G.bosses[(L-1)%G.bosses.length],ort=ORTE[(L-1)%ORTE.length],big=L%5===0;
   G.N=10+5*perm.start;G.Nshow=G.N;G.shield=perm.shield;G.bombs=perm.bomb;G.wpn=0;G.rush=0;G.state='run';G.speedMul=.3;G.clean=true;SHOTS.length=0;
-  G.speed=Math.min(24,15+L*.5);setTheme(L);
+  G.speed=Math.min(24,15+L*.5);setTheme(L);for(const a of ATK){a.ball.material.map=emojiTex(ITEM[boss]);a.ball.material.needsUpdate=true}
   let d=G.d+38,n=G.N;const add=r=>{r.grp=new THREE.Group();r.done=false;lvl.add(r.grp);G.rows.push(r);return r};
   const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
   makeSignRow(add({type:'sign',d:G.d+20,ort}));
@@ -480,10 +486,10 @@ canvas.addEventListener('pointermove',e=>{if(G&&G.hold){G.tx=Math.max(-4.3,Math.
 let AC=null,MG=null,SG=null,NB=null,wantMus=null,musCur={name:null,src:null,g:null};const lastT={},MUS={};
 function audioOn(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.gain.value=.5;MG.connect(AC.destination);SG=AC.createGain();SG.gain.value=1;SG.connect(AC.destination)}if(AC.state==='suspended'&&!document.hidden)AC.resume();if(wantMus&&musCur.name!==wantMus)music(wantMus)}catch(e){}}
 function loadMus(n){if(!MUS[n])MUS[n]=fetch('snd/'+n+'.mp3').then(r=>r.arrayBuffer()).then(b=>new Promise((res,rej)=>AC.decodeAudioData(b,res,rej))).catch(()=>{MUS[n]=null;return null});return MUS[n]}
-async function music(n){wantMus=n;if(!AC||MUTE||musCur.name===n)return;const buf=await loadMus(n);if(!buf||wantMus!==n||musCur.name===n||MUTE)return;
+async function music(n){wantMus=n;if(n==='game'){if(musCur.src)stopMus();if(AC&&!MUTE&&window.Xmas){Xmas.start();musCur.name='game'}return}if(window.Xmas)Xmas.stop();if(musCur.name==='game')musCur.name=null;if(!AC||MUTE||musCur.name===n)return;const buf=await loadMus(n);if(!buf||wantMus!==n||musCur.name===n||MUTE)return;
   stopMus();try{const src=AC.createBufferSource();src.buffer=buf;src.loop=true;const g=AC.createGain();g.gain.setValueAtTime(.0001,AC.currentTime);g.gain.exponentialRampToValueAtTime(1,AC.currentTime+.5);src.connect(g);g.connect(MG);src.start();musCur={name:n,src,g}}catch(e){}}
-function stopMus(){if(musCur.src){const {src,g}=musCur;try{g.gain.setTargetAtTime(.0001,AC.currentTime,.1);src.stop(AC.currentTime+.5)}catch(e){}}musCur={name:null,src:null,g:null}}
-function musRate(r){if(musCur.src)try{musCur.src.playbackRate.setTargetAtTime(r,AC.currentTime,.25)}catch(e){}}
+function stopMus(){if(window.Xmas)Xmas.stop();if(musCur.src){const {src,g}=musCur;try{g.gain.setTargetAtTime(.0001,AC.currentTime,.1);src.stop(AC.currentTime+.5)}catch(e){}}musCur={name:null,src:null,g:null}}
+function musRate(r){if(window.Xmas)Xmas.rate(r*(G?.94+Math.min(.26,G.level*.012):1));if(musCur.src)try{musCur.src.playbackRate.setTargetAtTime(r,AC.currentTime,.25)}catch(e){}}
 function tone(f,d,type,v,key,gap,slide){if(!AC||MUTE)return;const n=performance.now();if(key){if(n-(lastT[key]||0)<(gap||50))return;lastT[key]=n}
   try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,AC.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,AC.currentTime+d);g.gain.setValueAtTime(v||.1,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(SG);o.start();o.stop(AC.currentTime+d+.02)}catch(e){}}
 function noise(d,v,f,key,gap){if(!AC||MUTE)return;const n=performance.now();if(key){if(n-(lastT[key]||0)<(gap||50))return;lastT[key]=n}
@@ -557,7 +563,7 @@ function hit(sh,r,tz){const s=sh.s,dmg=sh.dmg;if(G.state!=='run')return;
 function arrive(){const cost=Math.ceil(G.base.hp/G.base.per);if(G.base.hp<=0){win();return}
   if(G.N>cost){floatText(G.cx,5.5,LEAD_Z,'−'+cost,'#ff6b7f',34);setN(G.N-cost);G.clean=false;G.base.hp=0;G.hpShow=0;win()}
   else{G.hpShow=G.base.hp;die(P[G.base.boss].name+'s Burg hat gehalten. Es fehlten '+(cost-G.N+1)+' Wichtel.')}}
-function launch(i){const a=ATK[i];if(a.on)return;a.on=true;a.t=0;a.dur=Math.max(.62,.98-G.level*.015);a.mk.visible=true;a.ball.visible=true}
+function launch(i){const a=ATK[i];if(a.on)return;a.on=true;a.t=0;if(G.base.boss==='selina'){const z=LEAD_Z-(G.castleRow.d-G.d);a.t=-.4;floatText(0,8,z,'🤮','#9be36b',46);burst(0,5,z+2,'#9be36b',26,6);tone(160,.3,'sawtooth',.06,null,0,70)}a.dur=Math.max(.62,.98-G.level*.015);a.mk.visible=true;a.ball.visible=true}
 function win(){
   const L=G.level,bonus=40*L,rest=G.N,tb=Math.max(0,Math.round(150*Math.min(1,(G.castleRow.d-G.d)/62)));addScore(bonus+Math.round(rest*.25)+tb);G.state='won';G.timer=2.2;SHOTS.length=0;
   for(const a of ATK){a.on=false;a.mk.visible=false;a.ball.visible=false}
@@ -595,6 +601,7 @@ function update(dt){
   if(G.fever>0){G.fever-=dt;if(G.fever<=0)musRate(1);if(Math.random()<.7)burst(G.cx+(Math.random()-.5)*2,1+Math.random()*2,LEAD_Z+.5,['#ffd54a','#ff9f1c','#ff5fa2'][Math.floor(Math.random()*3)],1,2)}
   G.pop=Math.max(0,G.pop-dt*5);G.kick=Math.max(0,G.kick-dt*9);
   if(G.state==='won')G.d+=G.speed*.8*dt;
+  if(me==='selina'&&G.state==='run'&&Math.random()<dt*.3){floatText(G.cx,5.2,LEAD_Z,'🤮','#9be36b',34);burst(G.cx,2.5,LEAD_Z-1.2,'#9be36b',16,4)}
   if(G.state==='run'){G.d+=G.speed*G.speedMul*(G.fever>0?1.25:1)*dt;G.playMs+=dt*1000;
     for(let q=0;q<2;q++)if(PT.n<MAXP){const k=PT.n++;PT.x[k]=(Math.random()<.5?-1:1)*(6.5+Math.random()*7);PT.y[k]=1+Math.random()*5;PT.z[k]=-45-Math.random()*20;PT.vx[k]=0;PT.vy[k]=5;PT.vz[k]=G.speed*G.speedMul*3.2;PT.l[k]=1;partMesh.instanceColor.setXYZ(k,1,1,1)}
     if(Math.random()<.6)burst(G.cx+(Math.random()-.5)*2.4,.05,LEAD_Z+1.2,'#ffffff',1,1.4);
@@ -634,8 +641,8 @@ function update(dt){
     if(G.base.hp<=0)win();
   }
   const cz=G.castleRow?LEAD_Z-(G.castleRow.d-G.d):-20;
-  for(const a of ATK){if(!a.on)continue;a.t+=dt;const p=Math.min(1,a.t/a.dur);
-    a.mk.material.opacity=.25+.35*Math.abs(Math.sin(a.t*14));a.ball.position.set(LX[a.lane]*p,6-5*p+Math.sin(p*Math.PI)*7,cz+(LEAD_Z-cz)*p);a.ball.rotation.x+=dt*8;
+  for(const a of ATK){if(!a.on)continue;a.t+=dt;const p=Math.max(0,Math.min(1,a.t/a.dur));
+    a.mk.material.opacity=.25+.35*Math.abs(Math.sin(a.t*14));a.ball.position.set(LX[a.lane]*p,6-5*p+Math.sin(p*Math.PI)*7,cz+(LEAD_Z-cz)*p);a.ball.material.rotation+=dt*7;
     if(p>=1){a.on=false;a.mk.visible=false;a.ball.visible=false;burst(LX[a.lane],.5,LEAD_Z,'#ffffff',26,7);noise(.25,.18,900);G.shake=Math.max(G.shake,.5);
       if(G.state==='run'){if(lane(G.cx)===a.lane){if(!shieldUp())hurt(Math.max(2,Math.ceil(G.N*.22)),P[G.base.boss].name+'s Burg hat gehalten.','#ffffff');if(G.state==='over')return}else addScore(3)}}}
   if(G.state==='won'){G.timer-=dt;G.rush+=(9-G.rush)*Math.min(1,dt*3);if(Math.random()<.5)burst(G.cx+(Math.random()-.5)*8,6+Math.random()*3,LEAD_Z-4,['#ffd54a','#e5394f','#2fbf71','#3a8dff'][Math.floor(Math.random()*4)],2,3);if(G.timer<=0){G.state='pick';showResult()}}
@@ -664,7 +671,7 @@ function syncInstances(dt,now){
     unitMesh.count=cnt;unitMesh.instanceMatrix.needsUpdate=true;
   }
   for(let k=0;k<PT.n;k++){const s=Math.max(.05,PT.l[k]);PV.set(PT.x[k],PT.y[k],PT.z[k]);S.set(s,s,s);EU.set(PT.l[k]*5,PT.l[k]*3,0);Q.setFromEuler(EU);M4.compose(PV,Q,S);partMesh.setMatrixAt(k,M4)}
-  if(shotMesh){Q.identity();S.set(.75,.75,2.6);for(let i=0;i<SHOTS.length&&i<90;i++){PV.set(SHOTS[i].x,1.5,SHOTS[i].z);M4.compose(PV,Q,S);shotMesh.setMatrixAt(i,M4)}shotMesh.count=Math.min(90,SHOTS.length);shotMesh.instanceMatrix.needsUpdate=true}
+  if(shotMesh){EU.set(-.6,0,0);Q.setFromEuler(EU);S.set(1,1,1);for(let i=0;i<SHOTS.length&&i<90;i++){PV.set(SHOTS[i].x,1.5,SHOTS[i].z);M4.compose(PV,Q,S);shotMesh.setMatrixAt(i,M4)}shotMesh.count=Math.min(90,SHOTS.length);shotMesh.instanceMatrix.needsUpdate=true}
   partMesh.count=PT.n;partMesh.instanceMatrix.needsUpdate=true;partMesh.instanceColor.needsUpdate=true;
 }
 function placeLabels(){
@@ -710,11 +717,11 @@ function shopHTML(){return '<h3><span>Werkstatt (bleibt dauerhaft)</span><span>�
 function modesHTML(){const done=PEOPLE.filter(p=>p.id!==me).reduce((a,p)=>a+Math.min(2,wins[p.id]||0),0),all=location.search.includes('alles');
   const m2=all||done>=14,m3=all||lsGet('bb_arena_best_'+me,0)>=25;
   return '<h3><span>Weitere Spielmodi</span><span></span></h3><a class="mode'+(m2?'':' lock')+'" '+(m2?'href="arena.html'+location.search+'"':'')+'>'+(m2?'⚔️':'🔒')+' <b>Modus 2: Delbrück erobern</b><br><small>'+(m2?'Arena gegen die anderen 7':'Erst jede Burg 2x erobern ('+done+'/14)')+'</small></a><a class="mode'+(m3?'':' lock')+'" '+(m3?'href="loch.html'+location.search+'"':'')+'>'+(m3?'🕳️':'🔒')+' <b>Modus 3: Schneeloch</b><br><small>'+(m3?'Schluck alles, was kleiner ist':'Erst in der Arena 25 % der Karte erobern')+'</small></a>'}
-const WEEKS=[{from:'2026-11-29',t:'Wichtel-Sturm',ic:'🏃',d:'Laufen, schießen, Burg stürmen'},{from:'2026-12-06',t:'Schneeloch',ic:'🕳️',d:'Schluck alles, was kleiner ist',href:'loch.html'},{from:'2026-12-13',t:'Delbrück erobern',ic:'⚔️',d:'Arena gegen die anderen 7',href:'arena.html'},{from:'2026-12-20',t:'Finale',ic:'🏆',d:'Alle Spiele offen, letzte Chance bis zur Baumshow'}];
+const WEEKS=[{from:'2026-11-29',t:'Wichtel-Sturm',ic:'🏃',d:'Laufen, schießen, Burg stürmen'},{from:'2026-12-06',t:'Schneeloch',ic:'🕳️',d:'Schluck alles, was kleiner ist',href:'loch.html'},{from:'2026-12-13',t:'Delbrück erobern',ic:'⚔️',d:'Arena gegen die anderen 7',href:'arena.html'},{from:'2026-12-20',t:'Farbschlacht',ic:'🎨',d:'Färbe Delbrück in deiner Farbe',href:'paint.html'}];
 function weekNow(){const t=new Date();let w=-1;WEEKS.forEach((x,i)=>{if(t>=new Date(x.from+'T00:00:00'))w=i});return w}
 function weeksHTML(){const w=weekNow(),all=location.search.includes('alles'),cw=Math.max(0,w);
-  return '<h3><span>Advents-Plan: jede Woche ein neues Spiel</span><span></span></h3>'+WEEKS.map((x,i)=>{const open=all||i<=cw,dt=new Date(x.from+'T00:00:00'),ds=dt.getDate()+'.'+(dt.getMonth()+1)+'.';
-    const st=i===cw?(w<0?'schon offen zum Aufwärmen':'läuft diese Woche'):open?'offen':'ab '+ds;
+  return '<h3><span>Advents-Plan: jede Woche ein neues Spiel</span><span></span></h3>'+WEEKS.map((x,i)=>{const open=true,dt=new Date(x.from+'T00:00:00'),ds=dt.getDate()+'.'+(dt.getMonth()+1)+'.';
+    const st=w>=0&&i===w?'läuft diese Woche':w<0||i>w?'Wertung ab '+ds+' · zum Testen offen':'offen';
     const inner=(open?x.ic:'🔒')+' <b>'+(i+1)+'. Advent: '+x.t+'</b><br><small>'+x.d+' · '+st+'</small>';
     return x.href&&open?'<a class="mode" href="'+x.href+location.search+'">'+inner+'</a>':'<div class="mode'+(open?' cur':' lock')+'">'+inner+'</div>'}).join('')}
 function pointsHTML(){const W=board.weeks||{},cur=board.week||0,pt={},det=[];

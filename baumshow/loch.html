@@ -156,5 +156,7 @@ requestAnimationFrame(frame);
 window.__loch={get s(){return {state,time,m:pl?pl.m:0}},joy(x,y){jx=x;jy=y},get near(){if(!pl)return null;let b=null,bd=1e9;for(const o of O){if(o.eat||o.r>=pl.R*.85)continue;const d=Math.hypot(o.x-pl.x,o.y-pl.y)-TYPES[o.t].v*8;if(d<bd){bd=d;b=o}}return b?[b.x-pl.x,b.y-pl.y]:null}};
 })();
 </script>
+<script src="snd/xmas.js"></script>
+<script>(()=>{let m=false;try{m=JSON.parse(localStorage.getItem('bb_mute')||'false')}catch(e){}if(m)return;document.addEventListener('pointerdown',()=>Xmas.start(),{once:true});setInterval(()=>{const h=window.__loch||window.__arena,s=h&&h.s;if(s)Xmas.rate(s.state==='play'&&s.time<15?1.2:1)},500)})()</script>
 </body>
 </html>

@@ -195,5 +195,7 @@ requestAnimationFrame(frame);
 window.__arena={get s(){return {state,time,pct:E?count(0)*100/TOT:0,alive:pl&&pl.alive,bots:E?E.slice(1).map(e=>Math.round(count(e.i)*100/TOT)):[]}},set ta(v){if(pl)pl.ta=v}};
 })();
 </script>
+<script src="snd/xmas.js"></script>
+<script>(()=>{let m=false;try{m=JSON.parse(localStorage.getItem('bb_mute')||'false')}catch(e){}if(m)return;document.addEventListener('pointerdown',()=>Xmas.start(),{once:true});setInterval(()=>{const h=window.__loch||window.__arena,s=h&&h.s;if(s)Xmas.rate(s.state==='play'&&s.time<15?1.2:1)},500)})()</script>
 </body>
 </html>
