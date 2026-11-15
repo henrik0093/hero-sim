@@ -255,7 +255,7 @@ function buildPlayer(){
   if(leader)scene.remove(leader);
   const col=P[me].color;
   unitMesh=new THREE.InstancedMesh(wichtelGeo(col),VC,MAXU);unitMesh.count=0;unitMesh.frustumCulled=false;unitMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(unitMesh);
-  leader=makeChar(me);leader.scale.setScalar(1.75);leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
+  leader=makeChar(me);leader.userData.sp.material.depthTest=false;leader.userData.sp.renderOrder=10;leader.position.set(0,0,LEAD_Z);scene.add(leader);prevCnt=0;
   for(let i=0;i<MAXU;i++){UX[i]=SLOT[i][0];UZ[i]=LEAD_Z+SLOT[i][1]}
 }
 function buildActors(){
@@ -494,7 +494,7 @@ function update(dt){
       if(r.type==='castle'){if(rel<=13){r.done=true;G.state='storm';G.timer=0;G.N0=G.N;G.H0=G.base.hp;SHOTS.length=0;tone(300,.4,'square',.06,null,0,700);banner('STURM!','')}}
       else if(rel<=0){r.done=true;if(r.type!=='sign'&&r.type!=='church')trigger(r);if(G.state==='over')return}
     }
-    if(rel<-18&&r.type!=='castle'){lvl.remove(r.grp);G.rows.splice(i,1)}
+    if(rel<-2.5&&r.type!=='castle'){lvl.remove(r.grp);G.rows.splice(i,1)}
   }
   if(G.state==='storm'){
     G.playMs+=dt*1000;G.timer+=dt;const p=Math.min(1,G.timer/1.5),H=G.H0,hit=Math.min(G.N0,H);
@@ -524,7 +524,7 @@ function syncInstances(dt,now){
     const N=G?Math.round(G.Nshow):22,cx=G?G.cx:0,rush=G?G.rush:0,run=!G||G.state==='run'||G.state==='storm';
     const cnt=Math.max(0,Math.min(MAXU,N-1));const tt=now/1000;
     leader.visible=N>=1;const lean=G?Math.max(-1,Math.min(1,(G.tx-G.cx)*.6)):0,pop=G?G.pop:0;
-    leader.position.set(cx,run?Math.abs(Math.sin(tt*14))*.22:0,LEAD_Z-rush*.6);leader.scale.setScalar(1.75*(1+pop*.22));animChar(leader,tt*14,run,lean);
+    leader.position.set(cx,run?Math.abs(Math.sin(tt*14))*.22:0,LEAD_Z-rush*.6);leader.scale.setScalar(2.25*(1+pop*.2));animChar(leader,tt*14,run,lean);
     for(let i=prevCnt;i<cnt;i++){BORN[i]=0;UX[i]=cx;UZ[i]=LEAD_Z}prevCnt=cnt;
         for(let i=0;i<cnt;i++){
       const tx=Math.max(-5.2,Math.min(5.2,cx+SLOT[i][0])),tz=LEAD_Z+SLOT[i][1]-rush*(1+(i%5)*.12);
@@ -540,7 +540,7 @@ function syncInstances(dt,now){
 }
 function placeLabels(){
   const c=$('cnt'),h=$('hpLbl');
-  if(G&&G.state!=='over'&&G.state!=='pick'&&G.Nshow>=1){const [sx,sy]=toScreen(G.cx,5,LEAD_Z-G.rush*.6);c.style.opacity=1;c.style.left=sx+'px';c.style.top=sy+'px';c.textContent=Math.round(G.Nshow);c.style.transform='translate(-50%,-100%) scale('+(1+G.pop*.4)+')'}else c.style.opacity=0;
+  if(G&&G.state!=='over'&&G.state!=='pick'&&G.Nshow>=1){const [sx,sy]=toScreen(G.cx,5.6,LEAD_Z-G.rush*.6);c.style.opacity=1;c.style.left=sx+'px';c.style.top=sy+'px';c.textContent=Math.round(G.Nshow);c.style.transform='translate(-50%,-100%) scale('+(1+G.pop*.4)+')'}else c.style.opacity=0;
   const r=G&&G.castleRow;const rel=r?r.d-G.d:999;
   if(r&&r.castle.userData.body.visible&&rel<95&&G.state!=='pick'){const [sx,sy]=toScreen(0,9,LEAD_Z-rel);h.classList.remove('hidden');h.style.opacity=1;h.style.left=sx+'px';h.style.top=sy+'px';
     $('hpName').textContent=P[G.base.boss].name+'s Burg';$('hpFill').style.width=(100*Math.max(0,G.hpShow)/G.base.max)+'%';$('hpTxt').textContent=Math.max(0,Math.ceil(G.hpShow))}
