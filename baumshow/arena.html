@@ -79,9 +79,9 @@ function boom(x,y,col,n){for(let k=0;k<n;k++){const a=Math.random()*6.28,s=3+Mat
 function kill(v,by){
   if(!v.alive||v.grace>0||time>T-5)return;v.alive=false;
   for(const c of v.trail)if(trail[c]===v.i)trail[c]=-1;v.trail=[];v.path=[];
-  for(let k=0;k<TOT;k++)if(owner[k]===v.i){owner[k]=by&&by!==v?by.i:-1}dirty=true;
+  for(let k=0;k<TOT;k++)if(owner[k]===v.i){owner[k]=-1}dirty=true;
   boom(v.x,v.y,v.color,40);
-  if(by&&by!==v){by.kills++;if(by===pl){toast('💥 '+v.name+' ist raus! Gebiet geerbt','#ffd54a');tone(300,.35,'square',.09,1000);shake=10;zoomK=1.12}}
+  if(by&&by!==v){by.kills++;if(by===pl){toast('💥 '+v.name+' ist raus! Gebiet wieder frei','#ffd54a');tone(300,.35,'square',.09,1000);shake=10;zoomK=1.12}}
   if(v===pl){shake=18;tone(120,.7,'sawtooth',.11,40);end(by&&by!==v?by.name+' hat deine Spur gekreuzt.':'Du bist in deine eigene Spur gelaufen.')}
   else v.resp=3.5;
 }
