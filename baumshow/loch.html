@@ -67,6 +67,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
   <a class="back" href="index.html">← zurück zum Menü</a>
 </div>
 <script src="snd/xmas.js"></script>
+<script src="snd/board.js"></script>
 <script type="module">
 import * as THREE from 'three';
 const PEOPLE=[{id:'henrik',name:'Henrik',color:'#e5394f'},{id:'alica',name:'Alica',color:'#ff5fa2'},{id:'eric',name:'Eric',color:'#f2851c'},{id:'sophia',name:'Sophia',color:'#f2b705'},{id:'fred',name:'Fred',color:'#2f7ff0'},{id:'selina',name:'Selina',color:'#17b5c9'},{id:'jerome',name:'Jerome',color:'#7a52f0'},{id:'moni',name:'Moni',color:'#c25ef0'}];
@@ -77,8 +78,7 @@ let me=lsGet('bb_me','henrik');if(!PEOPLE.find(p=>p.id===me))me='henrik';
 const MUTE=lsGet('bb_mute',false);
 const API='https://cfenuthulbpndrqboimq.supabase.co/functions/v1/baumshow';let T0=performance.now();
 async function sendScore(game,score){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,score,level:1,duration_ms:Math.round(performance.now()-T0),game})});const j=await r.json();let b=j.board;if(!b)b=await (await fetch(API+'?game='+game,{cache:'no-store'})).json();
-  const l=b.best||[],top=l[0],mine=l.find(x=>x.player===me);if(!top)return '';const nm=(PEOPLE.find(p=>p.id===top.player)||{}).name||'';
-  return top.player===me?'👑 Du führst die Wochen-Rangliste!':'👑 '+nm+' führt mit '+top.score.toLocaleString('de-DE')+'. Dir fehlen '+(top.score-(mine?mine.score:0)+1).toLocaleString('de-DE')+'.'}catch(e){return ''}}
+  return BB.html(b,me,PEOPLE,game)}catch(e){return ''}}
 let AC=null,lastTone=0;
 function audioOn(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
 function tone(f,d,type,v,slide){if(!AC||MUTE)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,AC.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,AC.currentTime+d);g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d+.02)}catch(e){}}
@@ -181,7 +181,7 @@ function start(){
   pl=Hs[0];$('tags').innerHTML='';tags.length=0;Hs.forEach((h,i)=>{holeGrp[i].userData.ring.material.color.set(h.color);const d=document.createElement('div');d.className='tag'+(i?'':' me');d.innerHTML='<span></span><img src="img/h_'+h.id+'.png" style="border-color:'+h.color+'">';$('tags').appendChild(d);tags.push(d)});
   time=DUR;tier=0;shake=0;jx=jy=0;dusk=0;lastTick=99;camD=420;dustN=0;state='play';T0=performance.now();
   $('menu').classList.add('hidden');$('over').classList.add('hidden');$('hud').classList.remove('hidden');$('next').classList.remove('hidden');$('mini').classList.remove('hidden');
-  if(!MUTE){Xmas.rate(1);Xmas.start()}toast('Schluck alles, was reinpasst!','#ffd54a');
+  if(!MUTE){Xmas.rate(1);Xmas.start(1)}toast('Schluck alles, was reinpasst!','#ffd54a');
 }
 function retarget(h){let bs=-1e9,bx=C,by=C;
   for(const o of Hs){if(o===h||o.dead>0)continue;const d=Math.hypot(o.x-h.x,o.y-h.y);
@@ -194,7 +194,7 @@ function end(){
   const bk='bb_loch_best_'+me,old=lsGet(bk,0);if(pts>old)lsSet(bk,pts);[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*110));
   setTimeout(()=>{for(const id of ['hud','next','mini','stick'])$(id).classList.add('hidden');$('tags').innerHTML='';$('over').classList.remove('hidden');$('oWhy').textContent=rk===1?'🏆 Größtes Loch von Delbrück!':'Zeit abgelaufen';$('oPts').textContent=pts.toLocaleString('de-DE');
     $('oSub').textContent='Platz '+rk+' von 8 · '+pl.eaten+' Löcher geschluckt'+(pts>old?' · neuer Rekord!':' · dein Rekord: '+old.toLocaleString('de-DE'));$('oBest').textContent=''},800);
-  sendScore('loch',pts).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML='<b style="color:#ffd54a">'+m+'</b>'},1000));
+  sendScore('loch',pts).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML=m},1000));
 }
 const v3=new THREE.Vector3();
 function scr(x,y,z){v3.set(x,y,z).project(camera);return [(v3.x*.5+.5)*innerWidth,(-v3.y*.5+.5)*innerHeight,v3.z]}

@@ -62,6 +62,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
   <a class="back" href="index.html">← zurück zum Menü</a>
 </div>
 <script src="snd/xmas.js"></script>
+<script src="snd/board.js"></script>
 <script type="module">
 import * as THREE from 'three';
 const PEOPLE=[{id:'henrik',name:'Henrik',color:'#e5394f'},{id:'alica',name:'Alica',color:'#ff5fa2'},{id:'eric',name:'Eric',color:'#f2851c'},{id:'sophia',name:'Sophia',color:'#f2b705'},{id:'fred',name:'Fred',color:'#2f7ff0'},{id:'selina',name:'Selina',color:'#17b5c9'},{id:'jerome',name:'Jerome',color:'#7a52f0'},{id:'moni',name:'Moni',color:'#c25ef0'}];
@@ -72,8 +73,7 @@ let me=lsGet('bb_me','henrik');if(!PEOPLE.find(p=>p.id===me))me='henrik';
 const MUTE=lsGet('bb_mute',false);
 const API='https://cfenuthulbpndrqboimq.supabase.co/functions/v1/baumshow';let T0=performance.now();
 async function sendScore(game,score){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,score,level:1,duration_ms:Math.round(performance.now()-T0),game})});const j=await r.json();let b=j.board;if(!b)b=await (await fetch(API+'?game='+game,{cache:'no-store'})).json();
-  const l=b.best||[],top=l[0],mine=l.find(x=>x.player===me);if(!top)return '';const nm=(PEOPLE.find(p=>p.id===top.player)||{}).name||'';
-  return top.player===me?'👑 Du führst die Wochen-Rangliste!':'👑 '+nm+' führt mit '+(top.score/10).toLocaleString('de-DE')+' %. Dir fehlen '+((top.score-(mine?mine.score:0)+1)/10).toLocaleString('de-DE')+' Punkte.'}catch(e){return ''}}
+  return BB.html(b,me,PEOPLE,game)}catch(e){return ''}}
 let AC=null;
 function audioOn(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
 function tone(f,d,type,v,slide){if(!AC||MUTE)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,AC.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,AC.currentTime+d);g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d+.02)}catch(e){}}
@@ -88,9 +88,9 @@ const tex=document.createElement('canvas');tex.width=tex.height=N*UP;const tg=te
 function toast(t,c){const el=$('toast');el.textContent=t;el.style.color=c||'#fff';el.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>el.classList.remove('on'),1100)}
 function count(i){let n=0;for(let k=0;k<TOT;k++)if(owner[k]===i)n++;return n}
 function paintMap(){for(let k=0;k<TOT;k++){const o=owner[k],t=trail[k],q=k*4;let r,g,b;
-    if(t>=0){const c=E[t].rgb;r=c[0]*.62+97;g=c[1]*.62+97;b=c[2]*.62+97}else if(o>=0){const c=E[o].rgb;r=c[0];g=c[1];b=c[2]}else{const ch=((k%N>>2)+(Math.floor(k/N)>>2))%2;r=ch?236:244;g=ch?242:248;b=255}
+    if(t>=0){const c=E[t].rgb;r=c[0]*.62+97;g=c[1]*.62+97;b=c[2]*.62+97}else if(o>=0){const c=E[o].rgb;r=c[0];g=c[1];b=c[2]}else{r=240;g=245;b=255}
     img.data[q]=r;img.data[q+1]=g;img.data[q+2]=b;img.data[q+3]=255}
-  sg.putImageData(img,0,0);tg.imageSmoothingEnabled=false;tg.drawImage(small,0,0,N*UP,N*UP);mapTex.needsUpdate=true;dirty=false}
+  sg.putImageData(img,0,0);mapTex.needsUpdate=true;dirty=false}
 function spawn(e){let x,y,k=0,ok;do{x=rnd(9,N-9);y=rnd(9,N-9);ok=true;for(const o of E)if(o!==e&&o.alive&&Math.hypot(o.x-x,o.y-y)<22-k*.2)ok=false;if(owner[Math.floor(y)*N+Math.floor(x)]>=0&&k<50)ok=false}while(!ok&&k++<90);
   e.x=x;e.y=y;e.a=Math.atan2(N/2-y,N/2-x)+rnd(-.6,.6);e.alive=true;e.cells=[];e.grace=1.2;e.mode='in';e.t=rnd(.3,1.2);e.hx=x;e.hy=y;
   for(let j=-4;j<=4;j++)for(let i=-4;i<=4;i++)if(i*i+j*j<=17){const c=(Math.floor(y)+j)*N+Math.floor(x)+i;if(trail[c]<0)owner[c]=e.i}dirty=true}
@@ -122,8 +122,18 @@ const scene=new THREE.Scene();scene.background=new THREE.Color('#cfe0f5');scene.
 const camera=new THREE.PerspectiveCamera(50,1,.5,400);
 function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
 scene.add(new THREE.HemisphereLight('#ffffff','#b9c8e6',1.3));const sun=new THREE.DirectionalLight('#fff3dd',1.4);sun.position.set(.5,1,.7);scene.add(sun);
-const mapTex=new THREE.CanvasTexture(tex);mapTex.colorSpace=THREE.SRGBColorSpace;mapTex.anisotropy=4;
-{const g=new THREE.Mesh(new THREE.PlaneGeometry(N,N),new THREE.MeshBasicMaterial({map:mapTex}));g.rotation.x=-Math.PI/2;g.position.set(N/2,0,N/2);scene.add(g);
+const mapTex=new THREE.CanvasTexture(small);mapTex.colorSpace=THREE.SRGBColorSpace;mapTex.magFilter=mapTex.minFilter=THREE.NearestFilter;mapTex.generateMipmaps=false;
+const gMat=new THREE.ShaderMaterial({uniforms:{map:{value:mapTex},n:{value:N}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:`uniform sampler2D map;uniform float n;varying vec2 vUv;
+vec3 tx(vec2 i){return texture2D(map,(clamp(i,0.0,n-1.0)+0.5)/n).rgb;}
+float eq(vec3 a,vec3 b){return step(distance(a,b),0.02);}
+void main(){vec2 p=vUv*n-0.5;vec2 i=floor(p),f=fract(p);vec3 c0=tx(i),c1=tx(i+vec2(1.0,0.0)),c2=tx(i+vec2(0.0,1.0)),c3=tx(i+vec2(1.0,1.0));
+float w0=(1.0-f.x)*(1.0-f.y),w1=f.x*(1.0-f.y),w2=(1.0-f.x)*f.y,w3=f.x*f.y;
+float s0=w0+w1*eq(c1,c0)+w2*eq(c2,c0)+w3*eq(c3,c0),s1=w1+w0*eq(c0,c1)+w2*eq(c2,c1)+w3*eq(c3,c1),s2=w2+w0*eq(c0,c2)+w1*eq(c1,c2)+w3*eq(c3,c2),s3=w3+w0*eq(c0,c3)+w1*eq(c1,c3)+w2*eq(c2,c3);
+vec3 c=c0;float s=s0;if(s1>s){s=s1;c=c1;}if(s2>s){s=s2;c=c2;}if(s3>s){s=s3;c=c3;}
+c*=mix(0.84,1.0,smoothstep(0.5,0.7,s));gl_FragColor=vec4(c,1.0);
+#include <colorspace_fragment>
+}`});
+{const g=new THREE.Mesh(new THREE.PlaneGeometry(N,N),gMat);g.rotation.x=-Math.PI/2;g.position.set(N/2,0,N/2);scene.add(g);
  const wm=new THREE.MeshLambertMaterial({color:'#2a4a8a'});for(const [x,z,w,d] of [[N/2,-.5,N+2,1],[N/2,N+.5,N+2,1],[-.5,N/2,1,N],[N+.5,N/2,1,N]]){const m=new THREE.Mesh(new THREE.BoxGeometry(w,1.6,d),wm);m.position.set(x,.8,z);scene.add(m)}
  const out=new THREE.Mesh(new THREE.PlaneGeometry(N*6,N*6),new THREE.MeshBasicMaterial({color:'#dfe9f6'}));out.rotation.x=-Math.PI/2;out.position.set(N/2,-.05,N/2);scene.add(out);
  const tr=new THREE.ConeGeometry(1.6,4.5,7);tr.translate(0,3,0);const tm=new THREE.InstancedMesh(tr,new THREE.MeshLambertMaterial({color:'#23995a'}),90),M=new THREE.Matrix4();for(let i=0;i<90;i++){const s=i%4,p=rnd(-8,N+8),o=rnd(3,16),sc=rnd(.7,1.5);M.makeScale(sc,sc,sc);M.setPosition(s===0?p:s===1?p:s===2?-o:N+o,0,s===0?-o:s===1?N+o:p,);tm.setMatrixAt(i,M)}scene.add(tm)}
@@ -145,14 +155,14 @@ function start(){
   pl=E[0];for(const e of E)spawn(e);pl.grace=2;buildActors();
   time=DUR;best=0;shake=0;jx=jy=0;lastTick=99;cd=3.2;PT.n=0;state='count';T0=performance.now();dirty=true;
   $('menu').classList.add('hidden');$('over').classList.add('hidden');$('hud').classList.remove('hidden');$('mini').classList.remove('hidden');
-  if(!MUTE){Xmas.rate(1);Xmas.start()}
+  if(!MUTE){Xmas.rate(1);Xmas.start(2)}
 }
 function end(){
   state='over';Xmas.stop();const pct=Math.max(best,count(0)*100/TOT),score=Math.min(1000,Math.round(pct*10)),rk=E.slice().sort((a,b)=>count(b.i)-count(a.i)).indexOf(pl)+1;
   const bk='bb_arena_best_'+me,old=lsGet(bk,0);if(pct>old)lsSet(bk,Math.round(pct*10)/10);[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*110));
   setTimeout(()=>{for(const id of ['hud','mini','stick'])$(id).classList.add('hidden');$('tags').innerHTML='';$('warn').style.opacity=0;$('over').classList.remove('hidden');$('oWhy').textContent=rk===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=pct.toFixed(1).replace('.',',')+' %';
     $('oSub').textContent='Dein größtes Gebiet · am Ende Platz '+rk+' von 8 · '+pl.kills+' Rauswürfe'+(pct>old?' · neuer Rekord!':' · dein Rekord: '+String(old).replace('.',',')+' %');$('oBest').textContent=''},800);
-  sendScore('arena',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML='<b style="color:#ffd54a">'+m+'</b>'},1000));
+  sendScore('arena',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML=m},1000));
 }
 function update(dt){
   if(state==='count'){cd-=dt;const c=Math.ceil(cd-.2);if(c!==lastTick){lastTick=c;if(c>0){toast(String(c));tone(440,.15,'square',.06)}else{toast('LOS!','#ffd54a');tone(880,.3,'square',.08)}}if(cd<=.2){state='play';lastTick=99}return}

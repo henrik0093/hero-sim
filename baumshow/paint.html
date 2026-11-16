@@ -58,6 +58,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
   <a class="back" href="index.html">← zurück zum Menü</a>
 </div>
 <script src="snd/xmas.js"></script>
+<script src="snd/board.js"></script>
 <script>
 const PEOPLE=[{id:'henrik',name:'Henrik',color:'#e5394f'},{id:'alica',name:'Alica',color:'#ff5fa2'},{id:'eric',name:'Eric',color:'#f2851c'},{id:'sophia',name:'Sophia',color:'#f2b705'},{id:'fred',name:'Fred',color:'#2f7ff0'},{id:'selina',name:'Selina',color:'#17b5c9'},{id:'jerome',name:'Jerome',color:'#7a52f0'},{id:'moni',name:'Moni',color:'#c25ef0'}];
 const $=id=>document.getElementById(id);
@@ -67,10 +68,9 @@ let me=lsGet('bb_me','henrik');if(!PEOPLE.find(p=>p.id===me))me='henrik';
 const MUTE=lsGet('bb_mute',false);
 const API='https://cfenuthulbpndrqboimq.supabase.co/functions/v1/baumshow';let T0=performance.now();
 async function sendScore(game,score){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,score,level:1,duration_ms:Math.round(performance.now()-T0),game})});const j=await r.json();let b=j.board;if(!b)b=await (await fetch(API+'?game='+game,{cache:'no-store'})).json();
-  const l=b.best||[],top=l[0],mine=l.find(x=>x.player===me);if(!top)return '';const nm=(PEOPLE.find(p=>p.id===top.player)||{}).name||'';
-  return top.player===me?'👑 Du führst die Wochen-Rangliste!':'👑 '+nm+' führt mit '+(top.score/10).toLocaleString('de-DE')+' %. Dir fehlen '+((top.score-(mine?mine.score:0)+1)/10).toLocaleString('de-DE')+' Punkte.'}catch(e){return ''}}
+  return BB.html(b,me,PEOPLE,game)}catch(e){return ''}}
 // ---------- Audio ----------
-let AC=null;const mus={play(){Xmas.rate(1);Xmas.start();return Promise.resolve()},pause(){Xmas.stop()},set currentTime(v){}};
+let AC=null;const mus={play(){Xmas.rate(1);Xmas.start(3);return Promise.resolve()},pause(){Xmas.stop()},set currentTime(v){}};
 function audioOn(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
 function tone(f,d,type,v,slide){if(!AC||MUTE)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,AC.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(slide,AC.currentTime+d);g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d+.02)}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)mus.pause();else if(state==='play'&&!MUTE)mus.play().catch(()=>{})});
@@ -125,7 +125,7 @@ function end(){
   setTimeout(()=>{$('hud').classList.add('hidden');$('over').classList.remove('hidden');$('oWhy').textContent=r===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=pct.toFixed(1).replace('.',',')+' %';
     $('oSub').textContent='Platz '+r+' von 8'+(score>old?' · neuer Rekord!':' · dein Rekord: '+(old/10).toLocaleString('de-DE')+' %');
     $('oList').innerHTML=rk.map((e,i)=>'<div class="row'+(e===pl?' mine':'')+'"><b>'+(i+1)+'</b><i style="background:'+e.color+'"></i><span>'+e.name+'</span><b>'+(cnt[e.i]*100/FREE).toFixed(1).replace('.',',')+' %</b></div>').join('');$('oBest').textContent=''},700);
-  sendScore('paint',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML='<b style="color:#ffd54a">'+m+'</b>'},900));
+  sendScore('paint',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML=m},900));
 }
 function update(dt){
   if(state==='count'){cd-=dt;const c=Math.ceil(cd-.2);if(c!==lastTick){lastTick=c;if(c>0){toast(String(c));tone(440,.15,'square',.06)}else{toast('LOS!','#ffd54a');tone(880,.3,'square',.08)}}if(cd<=.2){state='play';lastTick=99}return}

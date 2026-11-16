@@ -6,7 +6,9 @@
    {m:"G4:1.5 F4:.5 E4 D4 C4 D4 E4 C4 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4 B3 C4:2 G4:1.5 F4:.5 E4 D4 C4 D4 E4 C4 D4:.5 E4:.5 F4:.5 D4:.5 E4:1.5 D4:.5 C4 B3 C4:2 D4:1.5 E4:.5 F4 D4 E4:1.5 F4:.5 G4 D4 E4:.5 F#4:.5 G4 A4:.5 B4:.5 C5 B4 A4 G4:2 G4:1.5 F4:.5 E4 D4 C4 D4 E4 C4 A4:.5 A4:.5 A4:.5 A4:.5 G4:1.5 F4:.5 E4 D4 C4:2",
     c:"C C C C G G C C C C C C G G C C G G C G C D G G C C C C F C G C"},
    {m:"C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2",
-    c:"C C F C F C G C C F C G C F C G C C F C F C G C"}
+    c:"C C F C F C G C C F C G C F C G C C F C F C G C"},
+   {m:"G4:2 A4:2 G4:1.5 F4:.5 E4 F4 G4:2 A4:2 G4:1.5 F4:.5 E4 F4 G4:2 G4:2 A4:2 B4 C5 B4:2 A4:2 G4:4 D4:1.5 E4:.5 D4 E4 F4:1.5 G4:.5 F4:2 E4:1.5 F4:.5 E4 F4 G4:1.5 A4:.5 G4:2 C5 B4 A4 G4 C5 A4 G4 F4 E4:2 D4:2 C4:4",
+    c:"C F C C C F C C C C F G G D G G G G G G C C C C C G F F C G C C"}
   ];
   const SEMI={C:0,D:2,E:4,F:5,G:7,A:9,B:11},CH={C:[0,4,7],F:[5,9,12],G:[7,11,14],D:[2,6,9]};
   const fq=n=>{const m=n.match(/^([A-G])(#?)(\d)$/);return 261.63*Math.pow(2,(SEMI[m[1]]+(m[2]?1:0))/12+(+m[3]-4))};
@@ -34,9 +36,9 @@
     }
   }
   window.Xmas={
-    start(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();out=AC.createGain();out.gain.value=.34;const cp=AC.createDynamicsCompressor();out.connect(cp);cp.connect(AC.destination);
+    start(first){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();out=AC.createGain();out.gain.value=.34;const cp=AC.createDynamicsCompressor();out.connect(cp);cp.connect(AC.destination);
         nb=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const a=nb.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}
-      if(AC.state==='suspended')AC.resume();if(on)return;on=true;step=0;fill=0;nextT=AC.currentTime+.08;out.gain.setTargetAtTime(.34,AC.currentTime,.05);timer=setInterval(sched,45);sched()}catch(e){}},
+      if(AC.state==='suspended')AC.resume();if(on)return;on=true;if(first!=null)song=first%parsed.length;step=0;fill=0;nextT=AC.currentTime+.08;out.gain.setTargetAtTime(.34,AC.currentTime,.05);timer=setInterval(sched,45);sched()}catch(e){}},
     stop(){on=false;clearInterval(timer);if(AC)try{out.gain.setTargetAtTime(.0001,AC.currentTime,.08)}catch(e){}},
     rate(r){rate=Math.max(.8,Math.min(1.5,r))},
     get on(){return on}
