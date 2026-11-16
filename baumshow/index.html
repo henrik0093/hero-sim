@@ -98,6 +98,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 </style>
 <script type="module" src="snd/mp.js"></script>
 <script src="snd/xmas.js"></script>
+<script src="snd/quit.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
@@ -728,7 +729,7 @@ addEventListener('resize',resize);
 let last=performance.now();
 function loop(now){
   let dt=(now-last)/1000;last=now;if(dt>.05)dt=.05;
-  if(G&&G.state!=='over'&&G.state!=='pick'){if(G.freeze>0)G.freeze-=dt;else{G.slow=Math.max(0,G.slow-dt);update(dt*(G.slow>0?.35:1))}}
+  if(G&&G.state!=='over'&&G.state!=='pick'&&!window.__paused){if(G.freeze>0)G.freeze-=dt;else{G.slow=Math.max(0,G.slow-dt);update(dt*(G.slow>0?.35:1))}}
   if(!G){idleD+=dt*7}else idleD=G.d;
   scrollWorld(idleD);stepParticles(dt);animSnow(dt);
   const sh=G?G.shake:0;if(G)G.shake=Math.max(0,G.shake-dt*3);

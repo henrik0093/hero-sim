@@ -77,6 +77,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
 <script type="module" src="snd/mp.js"></script>
 <script src="snd/xmas.js"></script>
 <script src="snd/board.js"></script>
+<script src="snd/quit.js"></script>
 <script type="module">
 import * as THREE from 'three';
 const PEOPLE=[{id:'henrik',name:'Henrik',color:'#e5394f'},{id:'alica',name:'Alica',color:'#ff5fa2'},{id:'eric',name:'Eric',color:'#f2851c'},{id:'sophia',name:'Sophia',color:'#f2b705'},{id:'fred',name:'Fred',color:'#2f7ff0'},{id:'selina',name:'Selina',color:'#17b5c9'},{id:'jerome',name:'Jerome',color:'#7a52f0'},{id:'moni',name:'Moni',color:'#c25ef0'}];
@@ -302,7 +303,8 @@ canvas.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-ox0
 $('go').onclick=()=>{audioOn();start()};$('again').onclick=()=>{audioOn();start()};
 buildScene();
 let last=performance.now();
-function loop(now){let dt=(now-last)/1000;last=now;if(dt>.05)dt=.05;update(dt);render(now);requestAnimationFrame(loop)}
+let fAvg=16,fN=0,pr=Math.min(2,devicePixelRatio||1);function adapt(ms){fAvg+=(ms-fAvg)*.05;if(++fN>90){fN=0;if(fAvg>21&&pr>1){pr=Math.max(1,pr-.25);renderer.setPixelRatio(pr);resize()}}}
+function loop(now){let dt=(now-last)/1000;last=now;adapt(dt*1000);if(dt>.05)dt=.05;if(!(window.__paused&&!net))update(dt);render(now);requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 (function mpI(){if(!window.MP){setTimeout(mpI,400);return}MP.init(me,PEOPLE);MP.mount($('mpBox'),'loch',{invite(id){if(net)MP.invite(id,'loch',net.code);else{pendInv.push(id);if(state==='menu'||state==='over'){audioOn();start()}}},join(r){joinRoom=r;audioOn();start()}});if(joinRoom)$('go').textContent='BEITRETEN'})();
 window.__loch={tp(){const o=O.filter(o=>o.t===9&&!o.eat&&o.dead<=0).sort((a,b)=>Math.hypot(a.x-pl.x,a.y-pl.y)-Math.hypot(b.x-pl.x,b.y-pl.y))[0];if(!o)return null;if(pl.m<4000){pl.m=4000;pl.R=RAD(pl.m)}pl.x=o.x;pl.y=o.y;for(let i=0;i<12;i++)update(.05);return {prom:+prom.toFixed(2),puke:+puke.toFixed(2),drunk:+drunk.toFixed(2),m:Math.round(pl.m)}},ff(n){for(let i=0;i<n&&state==='play';i++)update(.05);return Hs.map(h=>h.name+':'+Math.round(h.m)).join(' ')},get net(){return net?{host:net.host,code:net.code,hum:Hs.filter(h=>!h.bot).map(h=>h.id),rem:Hs.filter(h=>h.remote).length,objs:O.length,alive:O.filter(o=>o.dead<=0).length,ms:Hs.map(h=>Math.round(h.m))}:null},get s(){return {state,time,m:pl?pl.m:0}},joy(x,y){jx=x;jy=y},get near(){if(!pl)return null;let b=null,bd=1e9;for(const o of O){if(o.eat||o.dead>0||o.r>=pl.R*.8)continue;const d=Math.hypot(o.x-pl.x,o.y-pl.y)-TY[o.t].v*8;if(d<bd){bd=d;b=o}}return b?[b.x-pl.x,b.y-pl.y]:null}};

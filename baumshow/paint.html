@@ -68,6 +68,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
 <script type="module" src="snd/mp.js"></script>
 <script src="snd/xmas.js"></script>
 <script src="snd/board.js"></script>
+<script src="snd/quit.js"></script>
 <script>
 const PEOPLE=[{id:'henrik',name:'Henrik',color:'#e5394f'},{id:'alica',name:'Alica',color:'#ff5fa2'},{id:'eric',name:'Eric',color:'#f2851c'},{id:'sophia',name:'Sophia',color:'#f2b705'},{id:'fred',name:'Fred',color:'#2f7ff0'},{id:'selina',name:'Selina',color:'#17b5c9'},{id:'jerome',name:'Jerome',color:'#7a52f0'},{id:'moni',name:'Moni',color:'#c25ef0'}];
 const $=id=>document.getElementById(id);
@@ -230,7 +231,7 @@ cv.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-ox0,dy=
 ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{down=false}));
 $('go').onclick=()=>{audioOn();start()};$('again').onclick=()=>{audioOn();start()};
 let last=performance.now();
-function loop(now){let dt=(now-last)/1000;last=now;if(dt>.05)dt=.05;update(dt);draw();requestAnimationFrame(loop)}
+function loop(now){let dt=(now-last)/1000;last=now;if(dt>.05)dt=.05;if(!(window.__paused&&!net))update(dt);draw();requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 (function mpI(){if(!window.MP){setTimeout(mpI,400);return}MP.init(me,PEOPLE);MP.mount($('mpBox'),'paint',{invite(id){if(net)MP.invite(id,'paint',net.code);else{pendInv.push(id);if(state==='menu'||state==='over'){audioOn();start()}}},join(r){joinRoom=r;audioOn();start()}});if(joinRoom)$('go').textContent='BEITRETEN'})();
 window.__paint={get net(){return net?{host:net.host,code:net.code,hum:E.filter(e=>!e.bot).map(e=>e.id),rem:E.filter(e=>e.remote).length}:null},get s(){return {state,time,pct:cnt?cnt[pl.i]*100/FREE:0,all:cnt?Array.from(cnt):[]}},joy(x,y){jx=x;jy=y}};
