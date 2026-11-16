@@ -176,7 +176,7 @@ function grow(h,v){h.m+=v;h.R=RAD(h.m)}
 function puff(x,z,n,sp,h){for(let i=0;i<n&&dustN<400;i++){const k=dustN++,a=Math.random()*6.283,s=rnd(.3,1)*sp;DP.x[k]=x+Math.cos(a)*rnd(0,h*.4);DP.y[k]=rnd(2,h);DP.z[k]=z+Math.sin(a)*rnd(0,h*.4);DP.vx[k]=Math.cos(a)*s;DP.vz[k]=Math.sin(a)*s;DP.vy[k]=rnd(.2,1)*sp;DP.l[k]=1}}
 const tags=[];
 function start(){
-  buildWorld();const order=[PEOPLE.find(p=>p.id===me),...PEOPLE.filter(p=>p.id!==me)],sk=[.84,.88,.92,.96,1,1.04,1.08].sort(()=>Math.random()-.5),off=Math.random()*6.283;
+  buildWorld();const order=[PEOPLE.find(p=>p.id===me),...PEOPLE.filter(p=>p.id!==me)],sk=[.8,.84,.88,.92,.96,1,1.03].sort(()=>Math.random()-.5),off=Math.random()*6.283;
   Hs=order.map((p,i)=>{const a=off+i/7*6.283;return {i,id:p.id,name:p.name,color:p.color,x:i?C+Math.cos(a)*1500:C,y:i?C+Math.sin(a)*1500:C+60,m:0,R:RAD(0),Rs:RAD(0),bot:i>0,skill:i?sk[i-1]:1,tx:C,ty:C,tt:0,dead:0,eaten:0}});
   pl=Hs[0];$('tags').innerHTML='';tags.length=0;Hs.forEach((h,i)=>{holeGrp[i].userData.ring.material.color.set(h.color);const d=document.createElement('div');d.className='tag'+(i?'':' me');d.innerHTML='<span></span><img src="img/h_'+h.id+'.png" style="border-color:'+h.color+'">';$('tags').appendChild(d);tags.push(d)});
   time=DUR;tier=0;shake=0;jx=jy=0;dusk=0;lastTick=99;camD=420;dustN=0;state='play';T0=performance.now();
