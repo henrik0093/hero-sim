@@ -489,9 +489,9 @@ function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a
 function startLevel(){const mr=Math.random;Math.random=mulberry(G.level*7919+20261129);try{startLevel0()}finally{Math.random=mr}for(const [f,r] of G._b)f(r);G._b=null;G.lt=0;G.rec=[];G.recT=0;loadGhost()}
 let ghost=null;
 function clearGhost(){if(ghost&&ghost.g)scene.remove(ghost.g);ghost=null;const el=$('gap');if(el)el.classList.add('hidden')}
-async function loadGhost(){clearGhost();const L=G.level;try{const r=await fetch(API+'?ghost='+L,{cache:'no-store'});const j=await r.json();if(!j||!Array.isArray(j.data)||!G||G.level!==L||G.state!=='run'||!P[j.player])return;
-  const g=makeChar(j.player,true);g.scale.setScalar(1.5);g.userData.sp.material.transparent=true;g.userData.sp.material.opacity=.55;const lb=label('👻 '+P[j.player].name,2.4,.6,{w:512,h:128,size:72});lb.position.y=3.3;lb.material.opacity=.8;g.add(lb);g.visible=false;scene.add(g);ghost={g,data:j.data,score:j.score,player:j.player,L}}catch(e){}}
-function sendGhost(){try{const sc=G.score,L=G.level;if(ghost&&ghost.L===L&&ghost.score>=sc)return;if(G.rec.length<30||G.rec.length>7000)return;fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,level:L,score:sc,ghost:G.rec})}).catch(()=>{})}catch(e){}}
+async function loadGhost(){clearGhost();const L=G.level;try{const r=await fetch(API+'?ghost='+L+'&me='+me,{cache:'no-store'});const j=await r.json();if(!j||!Array.isArray(j.data)||!G||G.level!==L||G.state!=='run'||!P[j.player])return;
+  const g=makeChar(j.player,true);g.scale.setScalar(1.5);g.userData.sp.material.transparent=true;g.userData.sp.material.opacity=.55;const lb=label('👻 '+(j.player===me?'Du':P[j.player].name),2.4,.6,{w:512,h:128,size:72});lb.position.y=3.3;lb.material.opacity=.8;g.add(lb);g.visible=false;scene.add(g);ghost={g,data:j.data,score:j.score,player:j.player,L}}catch(e){}}
+function sendGhost(){try{const sc=G.score,L=G.level;if(G.rec.length<30||G.rec.length>7000)return;fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,level:L,score:sc,ghost:G.rec})}).catch(()=>{})}catch(e){}}
 
 // ---------- Eingabe ----------
 let lastPX=0;
@@ -625,7 +625,7 @@ function update(dt){
   if(G.state==='won')G.d+=G.speed*.8*dt;
   if(me==='selina'&&G.state==='run'&&Math.random()<dt*.3){floatText(G.cx,5.2,LEAD_Z,'🤮','#9be36b',34);burst(G.cx,2.5,LEAD_Z-1.2,'#9be36b',16,4)}
   if(G.state==='run'){G.d+=G.speed*G.speedMul*(G.fever>0?1.25:1)*dt;G.playMs+=dt*1000;G.lt+=dt;G.recT-=dt;if(G.recT<=0){G.recT+=.1;G.rec.push(Math.round((G.d-G.d0)*10),Math.round(G.cx*10),G.N)}
-    if(ghost&&ghost.g){const i=Math.floor(G.lt*10)*3,gd=ghost.data,el=$('gap');if(i+2>=gd.length){ghost.g.visible=false;el.classList.add('hidden')}else{const rel=gd[i]/10-(G.d-G.d0);ghost.g.visible=rel>-9&&rel<70;ghost.g.position.set(gd[i+1]/10,0,LEAD_Z-rel);animChar(ghost.g,G.t*14,true,0);el.classList.remove('hidden');el.textContent='👻 '+P[ghost.player].name+(Math.abs(rel)<1.5?' gleichauf':rel>0?' '+Math.round(rel)+' m vor dir':' '+Math.round(-rel)+' m hinter dir');el.style.background=rel>1.5?'rgba(229,57,79,.85)':'rgba(47,191,113,.85)'}}
+    if(ghost&&ghost.g){const i=Math.floor(G.lt*10)*3,gd=ghost.data,el=$('gap');if(i+2>=gd.length){ghost.g.visible=false;el.classList.add('hidden')}else{const rel=gd[i]/10-(G.d-G.d0);ghost.g.visible=rel>-9&&rel<70;ghost.g.position.set(gd[i+1]/10,0,LEAD_Z-rel);animChar(ghost.g,G.t*14,true,0);el.classList.remove('hidden');el.textContent='👻 '+(ghost.player===me?'Dein Geist':P[ghost.player].name)+(Math.abs(rel)<1.5?' gleichauf':rel>0?' '+Math.round(rel)+' m vor dir':' '+Math.round(-rel)+' m hinter dir');el.style.background=rel>1.5?'rgba(229,57,79,.85)':'rgba(47,191,113,.85)'}}
     for(let q=0;q<2;q++)if(PT.n<MAXP){const k=PT.n++;PT.x[k]=(Math.random()<.5?-1:1)*(6.5+Math.random()*7);PT.y[k]=1+Math.random()*5;PT.z[k]=-45-Math.random()*20;PT.vx[k]=0;PT.vy[k]=5;PT.vz[k]=G.speed*G.speedMul*3.2;PT.l[k]=1;partMesh.instanceColor.setXYZ(k,1,1,1)}
     if(Math.random()<.6)burst(G.cx+(Math.random()-.5)*2.4,.05,LEAD_Z+1.2,'#ffffff',1,1.4);
   }
