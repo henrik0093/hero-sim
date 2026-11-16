@@ -89,6 +89,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 .card b{display:block;font-size:19px}
 .card small{font-size:14px;opacity:.75;font-weight:500}
 </style>
+<script type="module" src="snd/mp.js"></script>
 <script src="snd/xmas.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -125,6 +126,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
   <div class="board" id="chaseBox"></div>
   <button class="btn ghost" id="cert" style="font-size:17px">📸 Sieger-Bild zum Teilen</button>
   <div class="board" id="board1"></div>
+  <div class="board" id="mpBox"></div>
   <div class="board" id="weeks"></div>
   <div class="board" id="shop"></div>
   <div class="board" id="missions"></div>
@@ -859,6 +861,7 @@ buildWorld();buildActors();resize();
 $('splash').classList.add('hidden');if(!me)showScreen('who');else showScreen('start');
 setInterval(()=>{if(!G)fetchBoard()},30000);
 requestAnimationFrame(loop);
+(function mpI(){if(!window.MP||!me){setTimeout(mpI,500);return}MP.init(me,PEOPLE);MP.mount($('mpBox'),null,{})})();
 window.__bb={get G(){return G},lane,LX,bomb,ATK,gen(L){G.level=L;startLevel();return {L,plan:G.nPlan,hp:G.base.hp,len:Math.round(G.dEnd-G.d0),rows:G.rows.map(r=>r.type[0]+(r.var?r.var[0]:'')).join('')}}};
 
 </script>
