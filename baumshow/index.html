@@ -104,6 +104,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 <div id="flash"></div>
 <button id="bomb" class="hidden">💥</button>
 <div id="certView" class="screen dim hidden" style="z-index:60;justify-content:center"><img id="certImg" alt="" style="max-width:100%;max-height:66vh;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.5)"><button class="btn" id="certShare">TEILEN</button><button class="btn ghost" id="certClose">Schließen</button><div class="note">Oder lange auf das Bild drücken und sichern.</div></div>
+<div id="intro" class="screen dim hidden" style="z-index:55;justify-content:center;background:linear-gradient(180deg,#17347a,#0a1638)"><div class="logo">Baumshow<span>BATTLE</span></div><div class="note" style="max-width:340px;text-align:left;font-size:15px;opacity:1;margin-top:16px"><b>Worum geht es?</b> Vier Spiele, eins pro Adventswoche: Wichtel-Sturm, Schneeloch, Delbrück erobern und Farbschlacht.<br><br><b>Wichtel-Sturm:</b> Zieh nach links und rechts und lauf durch die besten Tore, damit deine Meute wächst. Sie schießt von allein auf alles in deiner Spur. Am Ende stürmst du die Burg.<br><br><b>Punkte:</b> Jedes geschaffte Level bringt Punkte, je mehr Wichtel übrig sind, desto mehr. Die besten drei jeder Woche bekommen 3, 2 und 1 Pokal-Punkt.<br><br><b>Der Preis:</b> Wer nach vier Wochen die meisten Pokal-Punkte hat, bekommt bei der Baumshow am 28.12. den Pokal und einen Preis.</div><button class="btn" id="introOk">ALLES KLAR</button></div>
 <div id="gap" class="hidden"></div>
 <div id="champ" class="hidden"><div id="champFill"></div><div id="champLbl"></div></div>
 <div id="splash" class="screen dim"><div class="logo">Baumshow<span>BATTLE</span></div><i><b></b></i></div>
@@ -804,7 +805,7 @@ async function submit(score,level,dur){
   lsSet('bb_pending',rest.slice(-5));return ok;
 }
 function showScreen(id){
-  for(const s of ['who','start','over','upg'])$(s).classList.toggle('hidden',s!==id);music(id?'menu':'game');if(id){$('champ').classList.add('hidden');clearGhost()}
+  for(const s of ['who','start','over','upg'])$(s).classList.toggle('hidden',s!==id);music(id?'menu':'game');if(id==='start'&&me&&!lsGet('bb_intro2',false)){$('intro').classList.remove('hidden');$('introOk').onclick=()=>{lsSet('bb_intro2',true);$('intro').classList.add('hidden');audioOn()}}if(id){$('champ').classList.add('hidden');clearGhost()}
   if(id==='start'||id==='who'||id==='over'){$('hud').classList.add('hidden');$('cnt').classList.add('hidden');$('hpLbl').classList.add('hidden');$('hint').classList.add('hidden')}
   if(id==='start'){renderLists();fetchBoard();countdown();if(G){clearLevel();G=null}if(me)buildPlayer()}
   if(id==='who')renderLists();
