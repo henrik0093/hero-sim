@@ -51,6 +51,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 #champFill{height:100%;width:0;background:linear-gradient(90deg,#ffd54a,#ff9f1c);border-radius:999px;transition:width .1s}
 #champLbl{position:absolute;inset:0;font-size:12px;line-height:18px;font-weight:700;text-align:center;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);white-space:nowrap}
 .chase{display:flex;align-items:center;gap:12px;font-size:16px;text-align:left}.chase .av{width:52px;height:52px}.chase small{opacity:.85}
+#gap{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 94px);transform:translateX(-50%);z-index:5;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px;pointer-events:none;white-space:nowrap}
 .over2{background:#e5394f;border-radius:12px;padding:10px 12px;font-weight:700;font-size:16px;margin-bottom:10px;animation:pulse 1s infinite alternate}
 .taunt2{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:12px;padding:8px 12px;margin-bottom:10px;text-align:left;font-size:16px;font-style:italic}.taunt2 .av{width:40px;height:40px;flex:none}.taunt2 small{font-style:normal;opacity:.8}
 .tset{display:flex;gap:8px;margin-bottom:10px}.tset input{flex:1;min-width:0;border:none;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px}.tset button{border:none;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;background:#ffd54a;color:#5a3500}
@@ -103,6 +104,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
 <div id="flash"></div>
 <button id="bomb" class="hidden">💥</button>
 <div id="certView" class="screen dim hidden" style="z-index:60;justify-content:center"><img id="certImg" alt="" style="max-width:100%;max-height:66vh;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.5)"><button class="btn" id="certShare">TEILEN</button><button class="btn ghost" id="certClose">Schließen</button><div class="note">Oder lange auf das Bild drücken und sichern.</div></div>
+<div id="gap" class="hidden"></div>
 <div id="champ" class="hidden"><div id="champFill"></div><div id="champLbl"></div></div>
 <div id="splash" class="screen dim"><div class="logo">Baumshow<span>BATTLE</span></div><i><b></b></i></div>
 
@@ -446,35 +448,35 @@ function newGame(){
   if(!lsGet('bb_seenhint3',false))$('hint').classList.remove('hidden');
 }
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.round(rnd(a,b));
-function startLevel(){
-  clearLevel();G.rows=[];
+function startLevel0(){
+  clearLevel();G.rows=[];G._b=[];const defer=(f,r)=>{G._b.push([f,r]);return r};
   const L=G.level,boss=G.bosses[(L-1)%G.bosses.length],ort=ORTE[(L-1)%ORTE.length],big=L%5===0;
-  G.N=10+5*perm.start;G.Nshow=G.N;G.shield=perm.shield;G.bombs=perm.bomb;G.wpn=0;G.spread=0;G.rush=0;G.state='run';G.speedMul=.3;G.clean=true;SHOTS.length=0;
+  G.N=10+3*perm.start;G.Nshow=G.N;G.shield=perm.shield;G.bombs=perm.bomb;G.wpn=0;G.spread=0;G.rush=0;G.state='run';G.speedMul=.3;G.clean=true;SHOTS.length=0;
   G.speed=Math.min(24,15+L*.5);setTheme(L);for(const a of ATK){a.ball.material.map=emojiTex(ITEM[boss]);a.ball.material.needsUpdate=true}
-  let d=G.d+38,n=G.N;const add=r=>{r.grp=new THREE.Group();r.done=false;lvl.add(r.grp);G.rows.push(r);return r};
+  let d=G.d+38,n=10;const add=r=>{r.grp=new THREE.Group();r.done=false;lvl.add(r.grp);G.rows.push(r);return r};
   const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-  makeSignRow(add({type:'sign',d:G.d+20,ort}));
-  if(ort==='Delbrück'||L%3===0)makeChurchRow(add({type:'church',d:G.d+60,side:Math.random()<.5?-1:1}));
+  defer(makeSignRow,add({type:'sign',d:G.d+20,ort}));
+  if(ort==='Delbrück'||L%3===0)defer(makeChurchRow,add({type:'church',d:G.d+60,side:Math.random()<.5?-1:1}));
   const gates=Math.min(8,3+Math.floor(L/2)),hard=Math.min(1,L/14);
   for(let i=0;i<gates;i++){
-    const good=()=>{if(Math.random()<.3&&n<600)return {k:'mul',v:Math.random()<.15?3:2};return {k:'add',v:Math.max(5,ri(n*.5,n*1.05))}};
+    const good=()=>{if(Math.random()<.25)return {k:'mul',v:2};return {k:'add',v:Math.max(5,ri(n*.55,n*.95))}};
     const small=()=>({k:'add',v:Math.max(2,ri(n*.08,n*.25))});
     const bad=()=>Math.random()<.6?{k:'sub',v:Math.max(3,ri(n*.3,n*.65))}:{k:'div',v:2};
     const ops=[good(),Math.random()<hard*.5?good():(Math.random()<.5?small():bad()),bad()];
     const best=Math.max(...ops.map(o=>opApply(n,o)));
     const mv=L>=3&&Math.random()<.15+hard*.4?rnd(1.1,1.9)*(Math.random()<.5?-1:1):0;
-    makeGateRow(add({type:'gate',d,ops:sh(ops),mv,ph:Math.random()*6}));n=Math.min(6000,best);d+=24;
+    defer(makeGateRow,add({type:'gate',d,ops:sh(ops),mv,ph:Math.random()*6}));n=Math.min(Math.round(40*Math.pow(1.38,Math.min(L,12))+40),best);d+=24;
     const t=Math.random();let safe=Math.floor(Math.random()*3);
     if(t<.42||(L===1&&i===0)){const a=Math.max(3,ri(n*.3,n*.5)),b=Math.max(5,ri(n*.8,n*1.15)),c=Math.max(8,ri(n*1.6,n*2.4));
-      const va=L>=3&&Math.random()<.6?[null,'tank','fast'][(L-1)%3]:null,f=va?.7:1,a2=Math.max(3,Math.round(a*f));const k=sh([a2,Math.max(5,Math.round(b*f)),L<3?0:Math.max(8,Math.round(c*f))]);makeEnemyRow(add({type:'enemy',d,k,var:va}));safe=k.indexOf(a2)}
+      const va=L>=3&&Math.random()<.6?[null,'tank','fast'][(L-1)%3]:null,f=va?.7:1,a2=Math.max(3,Math.round(a*f));const k=sh([a2,Math.max(5,Math.round(b*f)),L<3?0:Math.max(8,Math.round(c*f))]);defer(makeEnemyRow,add({type:'enemy',d,k,var:va}));safe=k.indexOf(a2)}
     else if(t<.72){const cr=[null,null,null],ls=sh([0,1,2]),cnt=Math.random()<.4?2:1;
       for(let j=0;j<cnt;j++){const q=Math.random(),kind=q<.3?'wpn':q<.42?'spread':q<.72?'troop':q<.86?'coin':q<.94?'bomb':'shield';cr[ls[j]]={kind,hp:Math.max(6,ri(n*.7,n*1.4)),amt:Math.max(5,Math.round(n*rnd(.4,.7)))}}
-      makeCrateRow(add({type:'crate',d,cr}));safe=ls[2];const tr=cr.filter(c=>c&&c.kind==='troop')[0];if(tr)n+=Math.round(tr.amt*.6)}
-    else if(t<.78&&L>=2){makeHayRow(add({type:'hay',d,free:safe}))}
-    else if(t<.86&&L>=4){makeWallRow(add({type:'wall',d,hp:Math.max(8,ri(n*.7,n*1.2))}))}
-    else if(t<.92||L<2){makeBallRow(add({type:'ball',d,w:1.5+hard*1.3,ph:Math.random()*6}))}
-    else makeChargerRow(add({type:'charger',d:d+30}));
-    if(Math.random()<.6)makeCoinRow(add({type:'coin',d:d+3.5,lane:safe}));
+      defer(makeCrateRow,add({type:'crate',d,cr}));safe=ls[2];const tr=cr.filter(c=>c&&c.kind==='troop')[0];if(tr)n+=Math.round(tr.amt*.6)}
+    else if(t<.78&&L>=2){defer(makeHayRow,add({type:'hay',d,free:safe}))}
+    else if(t<.86&&L>=4){defer(makeWallRow,add({type:'wall',d,hp:Math.max(8,ri(n*.7,n*1.2))}))}
+    else if(t<.92||L<2){defer(makeBallRow,add({type:'ball',d,w:1.5+hard*1.3,ph:Math.random()*6}))}
+    else defer(makeChargerRow,add({type:'charger',d:d+30}));
+    if(Math.random()<.6)defer(makeCoinRow,add({type:'coin',d:d+3.5,lane:safe}));
     d+=16;
   }
   G.nPlan=n;const Tk=(3+Math.min(4,L*.3))*(big?1.4:1);
@@ -483,6 +485,13 @@ function startLevel(){
   banner((big?'👹 BOSS-LEVEL ':'LEVEL ')+L,ort+' · '+P[boss].name+' verteidigt die Burg');
   hudStatic();G.hud=1;
 }
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function startLevel(){const mr=Math.random;Math.random=mulberry(G.level*7919+20261129);try{startLevel0()}finally{Math.random=mr}for(const [f,r] of G._b)f(r);G._b=null;G.lt=0;G.rec=[];G.recT=0;loadGhost()}
+let ghost=null;
+function clearGhost(){if(ghost&&ghost.g)scene.remove(ghost.g);ghost=null;const el=$('gap');if(el)el.classList.add('hidden')}
+async function loadGhost(){clearGhost();const L=G.level;try{const r=await fetch(API+'?ghost='+L,{cache:'no-store'});const j=await r.json();if(!j||!Array.isArray(j.data)||!G||G.level!==L||G.state!=='run'||!P[j.player])return;
+  const g=makeChar(j.player,true);g.scale.setScalar(1.5);g.userData.sp.material.transparent=true;g.userData.sp.material.opacity=.55;const lb=label('👻 '+P[j.player].name,2.4,.6,{w:512,h:128,size:72});lb.position.y=3.3;lb.material.opacity=.8;g.add(lb);g.visible=false;scene.add(g);ghost={g,data:j.data,score:j.score,player:j.player,L}}catch(e){}}
+function sendGhost(){try{const sc=G.score,L=G.level;if(ghost&&ghost.L===L&&ghost.score>=sc)return;if(G.rec.length<30||G.rec.length>7000)return;fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,level:L,score:sc,ghost:G.rec})}).catch(()=>{})}catch(e){}}
 
 // ---------- Eingabe ----------
 let lastPX=0;
@@ -576,7 +585,7 @@ function arrive(){const cost=Math.ceil(G.base.hp/G.base.per);if(G.base.hp<=0){wi
   else{G.hpShow=G.base.hp;die(P[G.base.boss].name+'s Burg hat gehalten. Es fehlten '+(cost-G.N+1)+' Wichtel.')}}
 function launch(i){const a=ATK[i];if(a.on)return;a.on=true;a.t=0;if(G.base.boss==='selina'){const z=LEAD_Z-(G.castleRow.d-G.d);a.t=-.4;floatText(0,8,z,'🤮','#9be36b',46);burst(0,5,z+2,'#9be36b',26,6);tone(160,.3,'sawtooth',.06,null,0,70)}a.dur=Math.max(.62,.98-G.level*.015);a.mk.visible=true;a.ball.visible=true}
 function win(){
-  const L=G.level,bonus=40*L,rest=G.N,tb=Math.max(0,Math.round(150*Math.min(1,(G.castleRow.d-G.d)/62)));addScore(bonus+Math.round(rest*.25)+tb);G.state='won';G.timer=2.2;SHOTS.length=0;
+  const L=G.level,bonus=40*L,rest=G.N,tb=Math.max(0,Math.round(150*Math.min(1,(G.castleRow.d-G.d)/62)));addScore(bonus+Math.round(rest*.25)+tb);sendGhost();clearGhost();G.state='won';G.timer=2.2;SHOTS.length=0;
   for(const a of ATK){a.on=false;a.mk.visible=false;a.ball.visible=false}
   G.castleRow.castle.userData.body.visible=false;G.castleRow.castle.userData.guard.userData.fly=16;wins[G.base.boss]=(wins[G.base.boss]||0)+1;lsSet(winsKey(),wins);G.kick=8;G.slow=.7;flash('#ffffff');
   G.cheer=makeChar(me);G.cheer.userData.sp.material.depthTest=false;G.cheer.userData.sp.renderOrder=11;G.cheer.scale.setScalar(1.8);scene.add(G.cheer);
@@ -615,7 +624,8 @@ function update(dt){
   G.pop=Math.max(0,G.pop-dt*5);G.kick=Math.max(0,G.kick-dt*9);
   if(G.state==='won')G.d+=G.speed*.8*dt;
   if(me==='selina'&&G.state==='run'&&Math.random()<dt*.3){floatText(G.cx,5.2,LEAD_Z,'🤮','#9be36b',34);burst(G.cx,2.5,LEAD_Z-1.2,'#9be36b',16,4)}
-  if(G.state==='run'){G.d+=G.speed*G.speedMul*(G.fever>0?1.25:1)*dt;G.playMs+=dt*1000;
+  if(G.state==='run'){G.d+=G.speed*G.speedMul*(G.fever>0?1.25:1)*dt;G.playMs+=dt*1000;G.lt+=dt;G.recT-=dt;if(G.recT<=0){G.recT+=.1;G.rec.push(Math.round((G.d-G.d0)*10),Math.round(G.cx*10),G.N)}
+    if(ghost&&ghost.g){const i=Math.floor(G.lt*10)*3,gd=ghost.data,el=$('gap');if(i+2>=gd.length){ghost.g.visible=false;el.classList.add('hidden')}else{const rel=gd[i]/10-(G.d-G.d0);ghost.g.visible=rel>-9&&rel<70;ghost.g.position.set(gd[i+1]/10,0,LEAD_Z-rel);animChar(ghost.g,G.t*14,true,0);el.classList.remove('hidden');el.textContent='👻 '+P[ghost.player].name+(Math.abs(rel)<1.5?' gleichauf':rel>0?' '+Math.round(rel)+' m vor dir':' '+Math.round(-rel)+' m hinter dir');el.style.background=rel>1.5?'rgba(229,57,79,.85)':'rgba(47,191,113,.85)'}}
     for(let q=0;q<2;q++)if(PT.n<MAXP){const k=PT.n++;PT.x[k]=(Math.random()<.5?-1:1)*(6.5+Math.random()*7);PT.y[k]=1+Math.random()*5;PT.z[k]=-45-Math.random()*20;PT.vx[k]=0;PT.vy[k]=5;PT.vz[k]=G.speed*G.speedMul*3.2;PT.l[k]=1;partMesh.instanceColor.setXYZ(k,1,1,1)}
     if(Math.random()<.6)burst(G.cx+(Math.random()-.5)*2.4,.05,LEAD_Z+1.2,'#ffffff',1,1.4);
   }
@@ -794,7 +804,7 @@ async function submit(score,level,dur){
   lsSet('bb_pending',rest.slice(-5));return ok;
 }
 function showScreen(id){
-  for(const s of ['who','start','over','upg'])$(s).classList.toggle('hidden',s!==id);music(id?'menu':'game');if(id)$('champ').classList.add('hidden');
+  for(const s of ['who','start','over','upg'])$(s).classList.toggle('hidden',s!==id);music(id?'menu':'game');if(id){$('champ').classList.add('hidden');clearGhost()}
   if(id==='start'||id==='who'||id==='over'){$('hud').classList.add('hidden');$('cnt').classList.add('hidden');$('hpLbl').classList.add('hidden');$('hint').classList.add('hidden')}
   if(id==='start'){renderLists();fetchBoard();countdown();if(G){clearLevel();G=null}if(me)buildPlayer()}
   if(id==='who')renderLists();
@@ -848,7 +858,7 @@ buildWorld();buildActors();resize();
 $('splash').classList.add('hidden');if(!me)showScreen('who');else showScreen('start');
 setInterval(()=>{if(!G)fetchBoard()},30000);
 requestAnimationFrame(loop);
-window.__bb={get G(){return G},lane,LX,bomb,ATK};
+window.__bb={get G(){return G},lane,LX,bomb,ATK,gen(L){G.level=L;startLevel();return {L,plan:G.nPlan,hp:G.base.hp,len:Math.round(G.dEnd-G.d0),rows:G.rows.map(r=>r.type[0]+(r.var?r.var[0]:'')).join('')}}};
 
 </script>
 </body>
