@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1a1208">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ölrausch">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Ölrausch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#1a1208;font-family:'Fredoka',system-ui,sans-serif;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+#c{position:fixed;inset:0;display:block}
+.hidden{display:none!important}
+.ov{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 18px);text-align:center;overflow-y:auto;touch-action:pan-y}
+.ov.center{justify-content:center;background:rgba(10,6,2,.72)}
+/* Hub */
+.topbar{width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.money{background:rgba(20,12,4,.72);border-radius:16px;padding:8px 14px;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.money b{display:block;font-size:30px;line-height:1.05;color:#ffd54a;text-shadow:0 2px 0 #8a5a00}
+.money small{font-size:14px;opacity:.85;font-weight:500}
+.price{background:rgba(20,12,4,.72);border-radius:14px;padding:8px 12px;font-size:14px;font-weight:600;text-align:right}
+.price b{display:block;font-size:19px}
+.up{color:#5be08f}.down{color:#ff7a7a}
+.boom{display:block;margin-top:3px;color:#ffb347;animation:blink .8s infinite}
+@keyframes blink{50%{opacity:.4}}
+.spacer{flex:0 0 22vh}
+.sheet{width:100%;max-width:420px;background:linear-gradient(#2a1d0f,#1c1309);border-radius:24px;padding:14px 14px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.4)}
+.logo{font-size:38px;font-weight:700;line-height:1;color:#ffd54a;text-shadow:0 3px 0 #8a4b00,0 8px 20px rgba(0,0,0,.4);letter-spacing:.5px}
+.logo span{color:#fff;text-shadow:0 3px 0 #333,0 8px 20px rgba(0,0,0,.4)}
+.btn{border:none;border-radius:18px;padding:16px 22px;font:inherit;font-weight:700;font-size:26px;cursor:pointer;color:#3a2000;background:linear-gradient(#ffe27a,#ffb21a);box-shadow:0 6px 0 #b87400,0 12px 24px rgba(0,0,0,.35);margin-top:14px;width:100%;letter-spacing:.5px}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b87400}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.03)}}
+.btn.sec{background:rgba(255,255,255,.12);color:#fff;box-shadow:none;font-size:17px;padding:13px;margin-top:10px}
+.chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.chip{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.09);font-weight:600;font-size:14px}
+.chip b{color:#ffd54a}
+h3{font-size:14px;letter-spacing:1.5px;text-transform:uppercase;opacity:.65;text-align:left;margin:18px 2px 8px}
+.item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:16px;padding:9px 10px;margin-top:8px;text-align:left}
+.item .ic{font-size:28px;width:40px;text-align:center;flex:none}
+.item .tx{flex:1;min-width:0}
+.item .tx b{font-size:16px;display:block}
+.item .tx small{font-size:13px;opacity:.75;display:block}
+.item .lv{font-size:12px;color:#ffd54a;font-weight:600}
+.buy{flex:none;border:none;border-radius:13px;padding:10px 10px;min-width:92px;font:inherit;font-weight:700;font-size:15px;color:#3a2000;background:linear-gradient(#ffe27a,#ffb21a);box-shadow:0 4px 0 #b87400}
+.buy:active{transform:translateY(3px);box-shadow:0 1px 0 #b87400}
+.buy.no{background:#3d3226;color:#9c8c78;box-shadow:0 4px 0 #2a2119}
+.buy.max{background:#2f5a3a;color:#bff5cf;box-shadow:none}
+.mis{padding:7px 2px;text-align:left}
+.mis .t{display:flex;justify-content:space-between;font-size:15px;gap:8px}
+.mis .t i{font-style:normal;color:#ffd54a;font-weight:600;white-space:nowrap}
+.bar{height:7px;border-radius:9px;background:rgba(255,255,255,.12);margin-top:5px;overflow:hidden}
+.bar div{height:100%;border-radius:9px;background:linear-gradient(90deg,#ffb21a,#ff6a2a);transition:width .4s}
+.row{display:flex;gap:8px}
+.row .btn.sec{flex:1}
+/* HUD */
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;z-index:5;pointer-events:none}
+#hud .l{display:flex;justify-content:space-between;align-items:center}
+.hchip{background:rgba(0,0,0,.45);border-radius:999px;padding:6px 11px;font-weight:600;font-size:16px}
+#pause{pointer-events:auto;border:none;background:rgba(0,0,0,.45);color:#fff;width:38px;height:38px;border-radius:50%;font:700 15px system-ui}
+.bars{display:flex;gap:8px;margin-top:8px}
+.hb{flex:1;background:rgba(0,0,0,.45);border-radius:10px;padding:4px 8px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.hb .bar{flex:1;margin:0;height:9px}
+#fuelB{background:linear-gradient(90deg,#ffcf3a,#ffe98a)}
+#durB{background:linear-gradient(90deg,#9fb3c8,#e3eef9)}
+/* Popups */
+.pop{background:linear-gradient(#2e2011,#1c1309);border-radius:24px;padding:20px 18px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.pop .em{font-size:52px;line-height:1.1}
+.pop h2{font-size:26px;margin-top:4px}
+.lines{margin-top:12px;text-align:left}
+.lines div{display:flex;justify-content:space-between;padding:5px 2px;font-size:16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.lines div b{color:#ffd54a}
+.total{font-size:46px;font-weight:700;color:#ffd54a;margin-top:10px;text-shadow:0 3px 0 #8a5a00}
+.rec{display:inline-block;margin-top:6px;padding:5px 12px;border-radius:999px;background:#ffd54a;color:#3a2000;font-weight:700;font-size:14px;animation:pulse .8s infinite}
+.hint{margin-top:8px;color:#ffcf8a;font-size:15px}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 92px);transform:translate(-50%,-20px);opacity:0;transition:all .3s;z-index:40;background:linear-gradient(90deg,#3ddc84,#1fb36b);color:#fff;font-weight:600;padding:10px 16px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:15px;white-space:nowrap;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.streak{display:flex;gap:5px;justify-content:center;margin:12px 0 4px}
+.streak span{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.streak span.on{background:#ffd54a;color:#3a2000}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="l"><div class="hchip">🛢 <span id="hBar">0</span></div><div class="hchip" id="hStreak" style="color:#ffd54a">×1.0</div><button id="pause">❚❚</button></div>
+  <div class="bars"><div class="hb">⛽<div class="bar"><div id="fuelB" style="width:100%"></div></div></div><div class="hb">🔩<div class="bar"><div id="durB" style="width:100%"></div></div></div></div>
+</div>
+<div id="toast"></div>
+
+<!-- Hauptmenü / Werkstatt -->
+<div id="hub" class="ov">
+  <div class="topbar">
+    <div class="money"><b id="uMoney">$0</b><small id="uRate">Pumpen: $0/s</small></div>
+    <div class="price">Ölpreis<b id="uPrice">$70</b><span id="uBoom" class="boom hidden">🔥 ÖLBOOM ×2</span></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="sheet">
+    <div class="logo">Öl<span>rausch</span></div>
+    <div class="chips"><div class="chip">Rekord <b id="uBest">0 m</b></div><div class="chip">Bohrungen <b id="uRuns">0</b></div></div>
+    <button class="btn pulse" id="bDrill">⛏ BOHREN</button>
+    <h3>Werkstatt</h3><div id="uUp"></div>
+    <h3>Ölfeld</h3><div id="uPump"></div>
+    <h3>Aufträge</h3><div id="uMis"></div>
+    <div class="row"><button class="btn sec" id="bSound">🔊 Ton an</button></div>
+  </div>
+</div>
+
+<!-- Abrechnung -->
+<div id="sum" class="ov center hidden">
+  <div class="pop">
+    <div class="em" id="sEm">🛢</div>
+    <h2 id="sWhy">Diesel leer</h2>
+    <div id="sRec" class="rec hidden">NEUER TIEFENREKORD!</div>
+    <div class="lines" id="sLines"></div>
+    <div class="total" id="sTotal">$0</div>
+    <div class="hint" id="sHint"></div>
+    <button class="btn" id="bAgain" style="font-size:22px">⛏ NOCHMAL BOHREN</button>
+    <button class="btn sec" id="bShop">🔧 Werkstatt</button>
+  </div>
+</div>
+
+<!-- Pause -->
+<div id="pauseOv" class="ov center hidden">
+  <div class="pop"><h2>Pause</h2><button class="btn" id="bResume">WEITER</button><button class="btn sec" id="bQuit">Bohrung abbrechen</button></div>
+</div>
+
+<!-- Info (Tagesbonus / Offline) -->
+<div id="info" class="ov center hidden">
+  <div class="pop"><div class="em" id="iEm">🎁</div><h2 id="iT"></h2><div id="iB"></div><button class="btn" id="bInfo">EINSAMMELN</button></div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const cv=$('c'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1,U=1;
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2.5);W=innerWidth;H=innerHeight;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);cv.style.width=W+'px';cv.style.height=H+'px';U=Math.max(.75,Math.min(1.4,Math.min(W/400,H/720)))}
+addEventListener('resize',resize);
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const TAU=Math.PI*2;
+function fmt(n){n=Math.floor(n);const a=Math.abs(n);if(a<1e4)return'$'+n.toLocaleString('de-DE');const u=[[1e12,'Bio.'],[1e9,'Mrd.'],[1e6,'Mio.'],[1e3,'K']];for(const[v,s]of u)if(a>=v)return'$'+(n/v).toLocaleString('de-DE',{maximumFractionDigits:a/v<100?1:0})+(s==='K'?'K':' '+s);return'$'+n}
+
+/* ---------- Speicher ---------- */
+const KEY='oelrausch-v1';
+const DEF={money:0,best:0,runs:0,up:{tank:0,bit:0,motor:0,pump:0,radar:0},pumps:0,missions:[],mLvl:0,lastDay:'',streak:0,sound:true,tut:0,seen:Date.now(),earned:0};
+let S;
+try{S=Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'));S.up=Object.assign({},DEF.up,S.up)}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+function save(){S.seen=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- Werte ---------- */
+const UPS=[
+ {id:'tank',ic:'⛽',n:'Diesel-Tank',base:1500,v:l=>16+4*l,f:v=>v+' s Bohrzeit'},
+ {id:'bit',ic:'🔩',n:'Bohrkopf',base:1800,v:l=>100+35*l,f:v=>'Härte '+v},
+ {id:'motor',ic:'⚙️',n:'Motor',base:2400,v:l=>30+3.5*l,f:v=>v.toFixed(1).replace('.',',')+' m/s'},
+ {id:'pump',ic:'🛢️',n:'Ölpumpe',base:2100,v:l=>1+.2*l,f:v=>'Barrel ×'+v.toFixed(1).replace('.',',')},
+ {id:'radar',ic:'📡',n:'Scheinwerfer',base:1600,v:l=>190+28*l,f:v=>'Sicht '+v},
+];
+const MAXL=25;
+const upCost=(u,l)=>Math.round(u.base*Math.pow(1.6,l)/10)*10;
+const uv=id=>UPS.find(u=>u.id===id).v(S.up[id]);
+const pumpCost=n=>Math.round(6000*Math.pow(1.17,n)/10)*10;
+const pumpRate=()=>S.pumps*6*(1+Math.floor(S.pumps/10)*.5);
+function oilPrice(t){t=(t||Date.now())/1000;const p=68+12*Math.sin(t/300)+6*Math.sin(t/71)+3*Math.sin(t/13);const boom=Math.floor(t/60)%9===0;return{p:boom?p*2:p,boom}}
+
+/* ---------- Aufträge ---------- */
+const MT={
+ depth:{txt:n=>`Bohre ${n} m tief`,n:L=>200+L*120,run:1},
+ barrels:{txt:n=>`Fördere ${n} Barrel in einer Bohrung`,n:L=>25+L*15,run:1},
+ pockets:{txt:n=>`Triff ${n} Ölblasen in einer Bohrung`,n:L=>3+L,run:1},
+ streak:{txt:n=>`Serie ×${(1+.2*(n-1)).toFixed(1).replace('.',',')} schaffen`,n:L=>3+Math.floor(L/2),run:1},
+ treasure:{txt:n=>`Finde ${n} Schätze`,n:L=>2+L,run:0},
+ earn:{txt:n=>`Verdiene ${fmt(n)}`,n:L=>Math.round(5000*Math.pow(1.7,L)/100)*100,run:0},
+};
+const misReward=()=>Math.round(800*Math.pow(1.55,S.mLvl)/10)*10;
+function newMission(){const used=S.missions.map(m=>m.t);const pool=Object.keys(MT).filter(t=>!used.includes(t));const t=pool[Math.floor(Math.random()*pool.length)];return{t,n:MT[t].n(S.mLvl),p:0,r:misReward()}}
+function refill(){S.missions=S.missions.filter(m=>!m.done);while(S.missions.length<3)S.missions.push(newMission());save()}
+refill();
+function mProg(type,val,cum){
+ for(const m of S.missions){
+  if(m.t!==type||m.done)continue;
+  m.p=Math.min(m.n,cum?m.p+val:Math.max(m.p,val));
+  if(m.p>=m.n){m.done=true;S.money+=m.r;S.mLvl++;toast(`✓ Auftrag erledigt  +${fmt(m.r)}`);sfx.mission();buzz([20,40,20])}
+ }
+}
+
+/* ---------- Ton ---------- */
+let AC=null,noiseBuf=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==='suspended')AC.resume();return AC}
+function tone(f,d,type='sine',v=.18,slide=0,delay=0){if(!S.sound)return;const a=ac();if(!a)return;const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f*slide),t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03)}
+function noise(d,f,v,delay=0){if(!S.sound)return;const a=ac();if(!a)return;if(!noiseBuf){noiseBuf=a.createBuffer(1,a.sampleRate,a.sampleRate);const c=noiseBuf.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=Math.random()*2-1}const t=a.currentTime+delay,s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();s.buffer=noiseBuf;s.loop=true;fl.type='lowpass';fl.frequency.setValueAtTime(f,t);fl.frequency.exponentialRampToValueAtTime(60,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t);s.stop(t+d+.05)}
+const sfx={
+ oil(k){const f=110*Math.pow(1.12,Math.min(k,12));tone(f,.35,'sine',.3,.5);tone(f*2,.2,'triangle',.08,.6,.05);tone(f*3,.15,'sine',.06,1,.12)},
+ cash(){[0,4,7,12].forEach((s,i)=>tone(880*Math.pow(2,s/12),.12,'square',.05,0,i*.05))},
+ coin(){tone(1320,.08,'sine',.12);tone(1760,.12,'sine',.09,0,.05)},
+ boom(){noise(.8,1800,.5);tone(70,.6,'sine',.4,.4)},
+ fuel(){tone(500,.12,'triangle',.12,1.6);tone(800,.12,'triangle',.1,1.4,.08)},
+ end(){tone(300,.5,'sawtooth',.08,.3);noise(.4,600,.2)},
+ mission(){[0,4,7,12].forEach((s,i)=>tone(523*Math.pow(2,s/12),.25,'triangle',.14,0,i*.08))},
+ buy(){[0,5,9].forEach((s,i)=>tone(660*Math.pow(2,s/12),.15,'triangle',.12,0,i*.05))},
+ layer(){[0,7,12].forEach((s,i)=>tone(330*Math.pow(2,s/12),.35,'sine',.12,0,i*.1))},
+ tick(){tone(1200,.03,'square',.03)},
+};
+let hum=null;
+function humStart(){if(!S.sound)return;const a=ac();if(!a||hum)return;const o=a.createOscillator(),o2=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();o.type='sawtooth';o.frequency.value=48;o2.type='square';o2.frequency.value=96.5;f.type='lowpass';f.frequency.value=380;g.gain.value=0;g.gain.linearRampToValueAtTime(.07,a.currentTime+.3);o.connect(f);o2.connect(f);f.connect(g);g.connect(a.destination);o.start();o2.start();
+ if(!noiseBuf){noise(.01,100,.0001)}const ns=a.createBufferSource(),nf=a.createBiquadFilter(),ng=a.createGain();ns.buffer=noiseBuf;ns.loop=true;nf.type='bandpass';nf.frequency.value=2200;nf.Q.value=.8;ng.gain.value=0;ns.connect(nf);nf.connect(ng);ng.connect(a.destination);ns.start();
+ hum={o,o2,f,g,ns,ng}}
+function humSet(speed,grind){if(!hum||!AC)return;const t=AC.currentTime;hum.o.frequency.setTargetAtTime(40+speed*.12,t,.1);hum.f.frequency.setTargetAtTime(grind?900:380,t,.05);hum.ng.gain.setTargetAtTime(grind?.12:0,t,.04)}
+function humStop(){if(!hum||!AC)return;const h=hum;hum=null;const t=AC.currentTime;h.g.gain.setTargetAtTime(0,t,.1);h.ng.gain.setTargetAtTime(0,t,.05);setTimeout(()=>{try{h.o.stop();h.o2.stop();h.ns.stop()}catch(e){}},600)}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+let toastT=0;function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2300)}
+
+/* ---------- Erdschichten ---------- */
+const LAYERS=[
+ {d:0,n:'Mutterboden',c:'#5e3b1f',s:'#432812'},
+ {d:120,n:'Sand',c:'#b88d52',s:'#94703c'},
+ {d:300,n:'Lehm',c:'#8e4f31',s:'#6c3920'},
+ {d:550,n:'Kalkstein',c:'#a69f87',s:'#7f7964'},
+ {d:850,n:'Schiefer',c:'#4a505b',s:'#33373f'},
+ {d:1250,n:'Salzstock',c:'#cfc8bc',s:'#a9a194'},
+ {d:1750,n:'Granit',c:'#6b5862',s:'#4a3c43'},
+ {d:2400,n:'Tiefengestein',c:'#3a2430',s:'#28161f'},
+ {d:3200,n:'Magma-Zone',c:'#561a10',s:'#a83a18'},
+];
+const layerIdx=m=>{let i=0;for(let k=0;k<LAYERS.length;k++)if(m>=LAYERS[k].d)i=k;return i};
+const PPM=()=>3*U; // Pixel pro Meter
+
+/* ---------- Spielzustand ---------- */
+let G=null,state='hub',paused=false;
+const touch={on:false,x:0};
+const CH=()=>600*U;
+
+function newWorld(){
+ G={objs:[],chunks:0,parts:[],texts:[],pipe:[],cam:-H*.3,shake:0,flash:0,dmg:0,t:0,mode:'idle',d:{x:W/2,y:0,ang:0,spin:0},barrels:0,pockets:0,treasure:0,tCount:0,streak:0,maxStreak:0,fuel:1,maxFuel:1,dur:1,maxDur:1,inRock:false,layer:0,endT:0,why:'',maxDepth:0};
+}
+function genChunk(){
+ const k=G.chunks++,y0=k*CH(),y1=y0+CH(),dm=(y0+y1)/2/PPM();
+ const placed=[];
+ function place(type,r,extra){
+  for(let a=0;a<14;a++){
+   const x=rand(r+8,W-r-8),y=rand(Math.max(y0,95*U),y1);
+   if(placed.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r+14*U))continue;
+   const o=Object.assign({type,x,y,r,alive:true,ph:rand(0,TAU),k:0},extra||{});
+   if(type==='rock'){o.pts=[];const n=9;for(let i=0;i<n;i++)o.pts.push(rand(.78,1.08))}
+   placed.push(o);G.objs.push(o);return o;
+  }
+ }
+ const oilN=2+(Math.random()<.6?1:0)+(dm>600?1:0);
+ for(let i=0;i<oilN;i++)place('oil',rand(15,32)*U*(1+Math.min(dm,3000)/3500));
+ const rockN=Math.min(8,1+Math.floor(dm/160)+(Math.random()<.5?1:0));
+ for(let i=0;i<rockN;i++)place('rock',rand(18,42)*U*(1+Math.min(dm,2000)/4000));
+ const gasN=dm<220?0:Math.min(3,Math.floor(rand(0,1.6+dm/700)));
+ for(let i=0;i<gasN;i++)place('gas',rand(15,22)*U);
+ if(Math.random()<.4)place('fuel',13*U);
+ if(Math.random()<.45){
+  const kind=dm>800&&Math.random()<.3?'diamond':dm>300&&Math.random()<.5?'gold':'fossil';
+  place('treasure',14*U,{kind});
+ }
+ // Gesteinskörner
+ const sp=[];for(let i=0;i<70;i++)sp.push({x:Math.random()*W,y:rand(y0,y1),s:rand(1.5,4)*U,a:rand(.25,.7)});
+ G.objs.push({type:'speck',y:y0,y1,sp,alive:true,x:0,r:0});
+}
+function startRun(){
+ ac();refill();
+ const keepCam=G?G.cam:-H*.3;
+ newWorld();G.cam=keepCam;
+ G.mode='run';
+ G.maxFuel=G.fuel=uv('tank');G.maxDur=G.dur=uv('bit');
+ G.speed=uv('motor')*PPM();G.pumpMult=uv('pump');G.vis=uv('radar')*U;
+ while(G.chunks<3)genChunk();
+ state='play';paused=false;show(null);humStart();
+ $('hBar').textContent='0';$('hStreak').textContent='×1,0';
+}
+const streakMult=()=>1+.2*Math.min(Math.max(G.streak-1,0),10);
+function endRun(why){
+ if(G.mode!=='run')return;
+ G.mode='end';G.why=why;G.endT=0;humStop();sfx.end();buzz([40,30,60]);
+}
+function hitOil(o){
+ o.alive=false;o.dying=1;
+ G.streak++;G.maxStreak=Math.max(G.maxStreak,G.streak);G.pockets++;
+ const dm=o.y/PPM();
+ const b=Math.max(1,Math.round(o.r/U*.4*(1+dm/400)*G.pumpMult*streakMult()));
+ G.barrels+=b;
+ sfx.oil(G.streak);buzz(15);
+ addText(o.x,o.y-o.r-10*U,`+${b} Barrel`,'#ffd54a',22);
+ if(G.streak>=2)addText(o.x,o.y-o.r-36*U,`SERIE ×${streakMult().toFixed(1).replace('.',',')}`,'#ff9f43',18);
+ for(let i=0;i<26;i++){const a=rand(-Math.PI*.95,-Math.PI*.05),s=rand(80,320)*U;G.parts.push({x:o.x,y:o.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:500*U,life:rand(.5,1),ml:1,col:Math.random()<.7?'#120a04':'#3a2a12',sz:rand(3,7)*U})}
+ G.flash=.12;
+ $('hBar').textContent=G.barrels;$('hStreak').textContent='×'+streakMult().toFixed(1).replace('.',',');
+ mProg('barrels',G.barrels);mProg('pockets',G.pockets);mProg('streak',G.streak);
+}
+function hitGas(o){
+ o.alive=false;o.dying=1;
+ G.dur-=35;G.streak=0;$('hStreak').textContent='×1,0';
+ G.shake=16;G.dmg=.5;sfx.boom();buzz([80,30,80]);
+ addText(o.x,o.y-30*U,'GAS! −35','#ff6a3a',24);
+ for(let i=0;i<40;i++){const a=rand(0,TAU),s=rand(80,380)*U;G.parts.push({x:o.x,y:o.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:0,life:rand(.3,.8),ml:.8,col:['#ffd54a','#ff9f43','#ff5e3a','#fff'][i%4],sz:rand(3,8)*U})}
+}
+function pickup(o){
+ o.alive=false;o.dying=1;
+ if(o.type==='fuel'){G.fuel=Math.min(G.maxFuel+6,G.fuel+5);sfx.fuel();addText(o.x,o.y-20*U,'+5 s Diesel','#ffcf3a',20);buzz(10)}
+ else{
+  const dm=o.y/PPM(),base={fossil:350,gold:900,diamond:3000}[o.kind];
+  const v=Math.round(base*(1+dm/300)/10)*10;G.treasure+=v;G.tCount++;sfx.coin();buzz(12);
+  addText(o.x,o.y-20*U,{fossil:'Fossil',gold:'Gold',diamond:'Diamant'}[o.kind]+' +'+fmt(v),'#9ff0ff',20);
+  mProg('treasure',1,true);
+ }
+ for(let i=0;i<12;i++){const a=rand(0,TAU),s=rand(60,200)*U;G.parts.push({x:o.x,y:o.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:0,life:.6,ml:.6,col:'#fff3b0',sz:rand(2,4)*U})}
+}
+function addText(x,y,txt,col,size){G.texts.push({x,y,txt,col,size:size*U,life:1.2})}
+
+function update(dt){
+ G.t+=dt;
+ const D=G.d;
+ if(G.mode==='run'){
+  let tgt=0;
+  if(touch.on){tgt=clamp((touch.x-D.x)/(W*.2),-1,1)*1.2}
+  const tr=2.4+.12*S.up.motor;
+  D.ang+=clamp(tgt-D.ang,-tr*dt,tr*dt);
+  let sp=G.speed*(G.inRock?.33:1);
+  D.x+=Math.sin(D.ang)*sp*dt;D.y+=Math.cos(D.ang)*sp*dt;
+  D.x=clamp(D.x,10*U,W-10*U);D.spin+=dt*(G.inRock?10:25);
+  const lp=G.pipe[G.pipe.length-1];
+  if(!lp||Math.hypot(lp.x-D.x,lp.y-D.y)>5*U)G.pipe.push({x:D.x,y:D.y});
+  while(G.chunks*CH()<D.y+H*1.5)genChunk();
+  // Kollisionen
+  const wasRock=G.inRock;G.inRock=false;
+  for(const o of G.objs){
+   if(!o.alive||o.type==='speck'||Math.abs(o.y-D.y)>o.r+30*U)continue;
+   const d=Math.hypot(o.x-D.x,o.y-D.y);
+   if(o.type==='rock'){if(d<o.r*.88)G.inRock=true}
+   else if(o.type==='oil'){if(d<o.r+3*U)hitOil(o)}
+   else if(o.type==='gas'){if(d<o.r+3*U)hitGas(o)}
+   else if(d<o.r+12*U)pickup(o);
+  }
+  if(G.inRock){
+   G.dur-=55*dt;G.shake=Math.max(G.shake,3);G.dmg=Math.max(G.dmg,.25);
+   if(!wasRock){if(G.streak>=2)addText(D.x,D.y-30*U,'Serie weg','#ff8a8a',18);G.streak=0;$('hStreak').textContent='×1,0';buzz(30)}
+   if(Math.random()<dt*40){const a=rand(0,TAU),s=rand(100,260)*U;G.parts.push({x:D.x,y:D.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:300*U,life:.35,ml:.35,col:Math.random()<.5?'#ffd54a':'#ff9f43',sz:2.5*U})}
+  }else if(Math.random()<dt*25){
+   const L=LAYERS[G.layer],a=rand(-2.6,-.5),s=rand(40,120)*U;
+   G.parts.push({x:D.x,y:D.y,vx:Math.cos(a)*s*(Math.random()<.5?-1:1),vy:Math.sin(a)*s,g:400*U,life:.5,ml:.5,col:L.s,sz:rand(2,4)*U});
+  }
+  humSet(sp/U,G.inRock);
+  G.fuel-=dt;
+  const dm=D.y/PPM();
+  G.maxDepth=Math.max(G.maxDepth,dm);mProg('depth',Math.floor(dm));
+  const li=layerIdx(dm);
+  if(li>G.layer){G.layer=li;G.banner={t:0,txt:LAYERS[li].n,sub:`${LAYERS[li].d} m · mehr Öl pro Blase`};sfx.layer()}
+  if(G.fuel<G.maxFuel*.2&&Math.floor(G.fuel*3)!==Math.floor((G.fuel+dt)*3))sfx.tick();
+  $('fuelB').style.width=clamp(G.fuel/G.maxFuel*100,0,100)+'%';
+  $('durB').style.width=clamp(G.dur/G.maxDur*100,0,100)+'%';
+  $('durB').style.background=G.dur/G.maxDur<.3?'#ff5e5e':'';
+  if(G.dur<=0)endRun('Bohrkopf kaputt');
+  else if(G.fuel<=0)endRun('Diesel leer');
+ }else if(G.mode==='end'){
+  G.endT+=dt;if(G.endT>1&&state==='play')showSummary();
+ }
+ const tgtCam=G.mode==='idle'?-H*.3:G.d.y-H*.38;
+ G.cam+=(tgtCam-G.cam)*Math.min(1,dt*(G.mode==='idle'?4:6));
+ for(const o of G.objs)if(o.dying)o.dying=Math.max(0,o.dying-dt*2.5);
+ G.objs=G.objs.filter(o=>(o.type==='speck'?o.y1:o.y+o.r)>G.cam-60);
+ for(const q of G.parts){q.vy+=(q.g||0)*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt}
+ G.parts=G.parts.filter(q=>q.life>0);
+ for(const t of G.texts){t.y-=36*U*dt;t.life-=dt}
+ G.texts=G.texts.filter(t=>t.life>0);
+ G.shake*=Math.pow(.01,dt);G.flash=Math.max(0,G.flash-dt);G.dmg=Math.max(0,G.dmg-dt);
+ if(G.banner){G.banner.t+=dt;if(G.banner.t>2.4)G.banner=null}
+}
+
+/* ---------- Zeichnen ---------- */
+function drawSky(sy){
+ if(sy<=0)return;
+ const g=ctx.createLinearGradient(0,sy-H,0,sy);g.addColorStop(0,'#3d8fd6');g.addColorStop(1,'#bfe4f5');
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,sy);
+ ctx.fillStyle='#fff6c9';ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(W*.82,sy-H*.22,26*U,0,TAU);ctx.fill();ctx.globalAlpha=1;
+ ctx.fillStyle='#8fb37a';ctx.beginPath();ctx.moveTo(0,sy);
+ for(let x=0;x<=W;x+=W/8)ctx.lineTo(x,sy-18*U-14*U*Math.sin(x/W*7+1));ctx.lineTo(W,sy);ctx.fill();
+}
+function drawDerrick(x,sy){
+ const h=110*U,w=46*U;
+ ctx.strokeStyle='#2b2b2b';ctx.lineWidth=3*U;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(x-w/2,sy);ctx.lineTo(x-6*U,sy-h);ctx.moveTo(x+w/2,sy);ctx.lineTo(x+6*U,sy-h);ctx.stroke();
+ ctx.lineWidth=1.6*U;ctx.beginPath();
+ for(let i=0;i<6;i++){const t1=i/6,t2=(i+1)/6,y1=sy-h*t1,y2=sy-h*t2,hw1=w/2-(w/2-6*U)*t1,hw2=w/2-(w/2-6*U)*t2;ctx.moveTo(x-hw1,y1);ctx.lineTo(x+hw2,y2);ctx.moveTo(x+hw1,y1);ctx.lineTo(x-hw2,y2);ctx.moveTo(x-hw2,y2);ctx.lineTo(x+hw2,y2)}
+ ctx.stroke();
+ ctx.fillStyle='#c0392b';ctx.fillRect(x-10*U,sy-h-8*U,20*U,8*U);
+ ctx.fillStyle='#555';ctx.fillRect(x-30*U,sy-8*U,60*U,8*U);ctx.lineCap='butt';
+}
+function drawPumpjack(x,sy,s,t){
+ ctx.save();ctx.translate(x,sy);ctx.scale(s*U,s*U);
+ const a=Math.sin(t)*.28;
+ ctx.fillStyle='#3a3a3a';ctx.fillRect(-34,-4,68,4);
+ ctx.strokeStyle='#3a3a3a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(0,-34);ctx.lineTo(10,0);ctx.stroke();
+ ctx.save();ctx.translate(0,-34);ctx.rotate(a);
+ ctx.fillStyle='#e0a32a';ctx.fillRect(-30,-4,58,8);
+ ctx.beginPath();ctx.moveTo(26,-10);ctx.quadraticCurveTo(40,0,26,16);ctx.lineTo(22,16);ctx.lineTo(22,-10);ctx.fill();
+ ctx.fillStyle='#555';ctx.beginPath();ctx.arc(-26,6,8,0,TAU);ctx.fill();
+ ctx.restore();
+ const hx=28*Math.cos(a)-(-34),hy=-34+28*Math.sin(a)+16;
+ ctx.strokeStyle='#222';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(30,-34+30*Math.sin(a)+12);ctx.lineTo(30,-2);ctx.stroke();
+ ctx.restore();
+}
+function drawGround(sy){
+ const top=Math.max(0,sy);if(top>=H)return;
+ const ppm=PPM();
+ for(let i=0;i<LAYERS.length;i++){
+  const y1=LAYERS[i].d*ppm-G.cam,y2=(i+1<LAYERS.length?LAYERS[i+1].d*ppm:1e9)-G.cam;
+  const a=Math.max(top,y1),b=Math.min(H,y2);
+  if(b>a){ctx.fillStyle=LAYERS[i].c;ctx.fillRect(0,a,W,b-a);
+   if(y1>top&&y1<H){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,y1,W,3*U)}}
+ }
+ if(sy>-10&&sy<H){ctx.fillStyle='#5b8f3a';ctx.fillRect(0,sy-2,W,8*U);ctx.fillStyle='#3e6b26';ctx.fillRect(0,sy+6*U,W,3*U)}
+}
+function drawRock(o,x,y){
+ ctx.fillStyle='#6f6f78';ctx.beginPath();
+ const n=o.pts.length;for(let i=0;i<n;i++){const a=i/n*TAU+o.ph,r=o.r*o.pts[i];ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#3d3d44';ctx.lineWidth=2.5*U;ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.arc(x-o.r*.3,y-o.r*.3,o.r*.28,0,TAU);ctx.fill();
+}
+function drawOil(o,x,y,t){
+ const s=o.alive?1:o.dying;if(s<=0)return;
+ const r=o.r*s,w=1+.06*Math.sin(t*3+o.ph);
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(x,y+3*U,r*1.15*w,r*.85/w,0,0,TAU);ctx.fill();
+ const g=ctx.createRadialGradient(x-r*.35,y-r*.35,r*.05,x,y,r*1.1);
+ g.addColorStop(0,'#5c4a2a');g.addColorStop(.35,'#1a1208');g.addColorStop(1,'#050302');
+ ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y,r*1.1*w,r*.82/w,0,0,TAU);ctx.fill();
+ ctx.fillStyle='rgba(255,230,160,.55)';ctx.beginPath();ctx.ellipse(x-r*.4,y-r*.35,r*.25,r*.1,-.5,0,TAU);ctx.fill();
+ ctx.fillStyle='rgba(120,200,255,.25)';ctx.beginPath();ctx.ellipse(x+r*.3,y+r*.25,r*.3,r*.08,-.3,0,TAU);ctx.fill();
+}
+function drawGas(o,x,y,t){
+ const s=o.alive?1:o.dying;if(s<=0)return;
+ const r=o.r*(o.alive?1+.08*Math.sin(t*6+o.ph):1+(1-s)*2);
+ ctx.globalAlpha=o.alive?1:s;
+ const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#fbff9e');g.addColorStop(.6,'#b6d93a');g.addColorStop(1,'#6b8f12');
+ ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
+ ctx.fillStyle='#3a4a00';ctx.font=`700 ${r}px Fredoka,system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('!',x,y+1);
+ ctx.globalAlpha=1;
+}
+function drawItem(o,x,y,t){
+ if(!o.alive)return;
+ const b=Math.sin(t*4+o.ph)*2*U;y+=b;
+ ctx.globalAlpha=.3;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,o.r*1.7,0,TAU);ctx.fill();ctx.globalAlpha=1;
+ if(o.type==='fuel'){
+  ctx.fillStyle='#d32f2f';ctx.fillRect(x-9*U,y-11*U,18*U,22*U);ctx.fillStyle='#8e1c1c';ctx.fillRect(x+3*U,y-15*U,5*U,5*U);
+  ctx.fillStyle='#fff';ctx.font=`700 ${11*U}px Fredoka,system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('D',x,y+1);
+ }else if(o.kind==='fossil'){
+  ctx.strokeStyle='#f3ead2';ctx.lineWidth=5*U;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-9*U,y+6*U);ctx.lineTo(x+9*U,y-6*U);ctx.stroke();
+  ctx.fillStyle='#f3ead2';for(const[dx,dy]of[[-10,4],[-8,9],[8,-9],[10,-4]]){ctx.beginPath();ctx.arc(x+dx*U,y+dy*U,3.5*U,0,TAU);ctx.fill()}ctx.lineCap='butt';
+ }else if(o.kind==='gold'){
+  ctx.fillStyle='#ffc93a';ctx.beginPath();ctx.moveTo(x-11*U,y+4*U);ctx.lineTo(x-4*U,y-9*U);ctx.lineTo(x+8*U,y-6*U);ctx.lineTo(x+11*U,y+6*U);ctx.lineTo(x-2*U,y+9*U);ctx.fill();
+  ctx.fillStyle='#fff3b0';ctx.beginPath();ctx.arc(x-2*U,y-3*U,3*U,0,TAU);ctx.fill();
+ }else{
+  ctx.fillStyle='#7ff0ff';ctx.beginPath();ctx.moveTo(x,y-12*U);ctx.lineTo(x+10*U,y-3*U);ctx.lineTo(x,y+12*U);ctx.lineTo(x-10*U,y-3*U);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e0fdff';ctx.beginPath();ctx.moveTo(x,y-12*U);ctx.lineTo(x+4*U,y-3*U);ctx.lineTo(x-4*U,y-3*U);ctx.fill();
+ }
+}
+function drawDrill(){
+ const D=G.d;
+ ctx.save();ctx.translate(D.x,D.y);ctx.rotate(-D.ang);
+ ctx.fillStyle='#8a8f98';ctx.fillRect(-7*U,-26*U,14*U,18*U);
+ ctx.fillStyle='#c7ccd4';ctx.beginPath();ctx.moveTo(-9*U,-10*U);ctx.lineTo(9*U,-10*U);ctx.lineTo(0,10*U);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#5d636c';ctx.lineWidth=2*U;
+ for(let i=0;i<3;i++){const o=((D.spin*6+i*6)%18)-10;const k=(10-(o+10)/20*10)/10;ctx.beginPath();ctx.moveTo(-9*U*k,o*U);ctx.lineTo(9*U*k,o*U+3*U);ctx.stroke()}
+ ctx.restore();
+}
+function draw(){
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.fillStyle='#1a1208';ctx.fillRect(0,0,W,H);
+ if(!G)return;
+ ctx.save();
+ if(G.shake>.3)ctx.translate(rand(-G.shake,G.shake),rand(-G.shake,G.shake));
+ const sy=-G.cam,t=G.t;
+ drawSky(sy);drawGround(sy);
+ // Pumpen + Bohrturm
+ if(sy>-20&&sy<H+150){
+  const n=Math.min(S.pumps,12),now=performance.now()/1000;
+  for(let i=0;i<n;i++){const side=i%2?1:-1,k=Math.floor(i/2);const x=W/2+side*(70+k*42)*U;if(x<10||x>W-10)continue;drawPumpjack(x,sy,.75-(k*.04),now*2.2+i*1.3)}
+  drawDerrick(W/2,sy);
+ }
+ ctx.translate(0,-G.cam);
+ for(const o of G.objs){if(o.type!=='speck'||o.y1<G.cam||o.y>G.cam+H)continue;const L=LAYERS[layerIdx(o.y/PPM())];ctx.fillStyle=L.s;for(const p of o.sp){if(p.y<0)continue;ctx.globalAlpha=p.a;ctx.fillRect(p.x,p.y,p.s,p.s)}}
+ ctx.globalAlpha=1;
+ // Rohr
+ if(G.pipe.length>1){
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.strokeStyle='#2a2a2e';ctx.lineWidth=9*U;ctx.beginPath();ctx.moveTo(W/2,0);for(const p of G.pipe)ctx.lineTo(p.x,p.y);ctx.stroke();
+  ctx.strokeStyle='#9aa0a8';ctx.lineWidth=5*U;ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.5*U;ctx.stroke();
+ }
+ for(const o of G.objs){
+  if(o.type==='speck'||o.y+o.r<G.cam-40||o.y-o.r>G.cam+H+40)continue;
+  if(o.type==='rock')drawRock(o,o.x,o.y);
+  else if(o.type==='oil')drawOil(o,o.x,o.y,t);
+  else if(o.type==='gas')drawGas(o,o.x,o.y,t);
+  else drawItem(o,o.x,o.y,t);
+ }
+ if(G.mode!=='idle')drawDrill();
+ for(const q of G.parts){ctx.globalAlpha=Math.max(0,q.life/q.ml);ctx.fillStyle=q.col;ctx.fillRect(q.x-q.sz/2,q.y-q.sz/2,q.sz,q.sz)}
+ ctx.globalAlpha=1;
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ for(const x of G.texts){ctx.globalAlpha=Math.min(1,x.life*2);ctx.font=`700 ${x.size}px Fredoka,system-ui`;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillText(x.txt,x.x+2,x.y+2);ctx.fillStyle=x.col;ctx.fillText(x.txt,x.x,x.y)}
+ ctx.globalAlpha=1;
+ ctx.restore();
+ // Dunkelheit unter Tage
+ if(G.mode!=='idle'){
+  const dx=G.d.x,dy=G.d.y-G.cam,top=Math.max(0,sy+4*U);
+  const v=G.vis;
+  const g=ctx.createRadialGradient(dx,dy+v*.3,v*.45,dx,dy+v*.3,v*1.1);
+  g.addColorStop(0,'rgba(8,5,2,0)');g.addColorStop(1,'rgba(8,5,2,.86)');
+  ctx.fillStyle=g;if(top<H)ctx.fillRect(0,top,W,H-top);
+ }
+ if(G.flash>0){ctx.fillStyle=`rgba(255,220,120,${G.flash})`;ctx.fillRect(0,0,W,H)}
+ if(G.dmg>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(255,0,0,0)');g.addColorStop(1,`rgba(255,30,30,${G.dmg*.8})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+ if(state!=='play'||G.mode==='idle')return;
+ // HUD-Tiefe
+ const top=Math.max(14,safeTop())+96;
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ const dm=Math.max(0,Math.floor(G.d.y/PPM()));
+ ctx.font=`700 ${40*U}px Fredoka,system-ui`;ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillText(dm+' m',W/2+2,top+2);ctx.fillStyle='#fff';ctx.fillText(dm+' m',W/2,top);
+ if(S.best>0){ctx.font=`600 ${13*U}px Fredoka,system-ui`;ctx.fillStyle=dm>S.best?'#ffd54a':'rgba(255,255,255,.65)';ctx.fillText(dm>S.best?'NEUER REKORD!':`Rekord ${S.best} m`,W/2,top+26*U)}
+ // Rekordlinie
+ if(S.best>0){const ry=S.best*PPM()-G.cam;if(ry>0&&ry<H){ctx.setLineDash([8*U,6*U]);ctx.strokeStyle='#ffd54a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ry);ctx.lineTo(W,ry);ctx.stroke();ctx.setLineDash([]);ctx.font=`600 ${13*U}px Fredoka,system-ui`;ctx.fillStyle='#ffd54a';ctx.textAlign='left';ctx.fillText('Rekord '+S.best+' m',8,ry-10*U);ctx.textAlign='center'}}
+ if(S.tut<1&&G.t<7){
+  ctx.font=`600 ${19*U}px Fredoka,system-ui`;ctx.fillStyle=`rgba(255,255,255,${.7+.3*Math.sin(G.t*5)})`;
+  ctx.fillText('Finger halten & ziehen = lenken',W/2,H*.8);
+  ctx.font=`500 ${15*U}px Fredoka,system-ui`;ctx.fillStyle='rgba(255,230,160,.9)';ctx.fillText('Schwarzes Öl treffen · Felsen & Gas meiden',W/2,H*.8+26*U);
+ }
+ if(G.banner){const b=G.banner,a=b.t<.3?b.t/.3:b.t>2?(2.4-b.t)/.4:1;ctx.globalAlpha=a;
+  ctx.font=`700 ${32*U}px Fredoka,system-ui`;ctx.fillStyle='#ffd54a';ctx.fillText(b.txt,W/2,H*.62);
+  ctx.font=`500 ${15*U}px Fredoka,system-ui`;ctx.fillStyle='#fff';ctx.fillText(b.sub,W/2,H*.62+30*U);ctx.globalAlpha=1}
+}
+let _st=null;function safeTop(){if(_st===null){const d=document.createElement('div');d.style.cssText='position:fixed;top:0;height:env(safe-area-inset-top);';document.body.appendChild(d);_st=d.getBoundingClientRect().height||0;d.remove()}return _st}
+
+/* ---------- Oberfläche ---------- */
+function show(id){for(const o of['hub','sum','pauseOv','info'])$(o).classList.toggle('hidden',o!==id);$('hud').classList.toggle('hidden',!(id===null&&state==='play'))}
+function renderHub(){
+ $('uBest').textContent=S.best+' m';$('uRuns').textContent=S.runs;
+ $('bSound').textContent=S.sound?'🔊 Ton an':'🔇 Ton aus';
+ $('uUp').innerHTML=UPS.map(u=>{const l=S.up[u.id],max=l>=MAXL,c=upCost(u,l);
+  return`<div class="item"><div class="ic">${u.ic}</div><div class="tx"><b>${u.n} <span class="lv">Stufe ${l}</span></b><small>${u.f(u.v(l))}${max?'':' → '+u.f(u.v(l+1))}</small></div><button class="buy ${max?'max':S.money>=c?'':'no'}" data-up="${u.id}">${max?'MAX':fmt(c)}</button></div>`}).join('');
+ const pc=pumpCost(S.pumps);
+ $('uPump').innerHTML=`<div class="item"><div class="ic">🏗️</div><div class="tx"><b>Pferdekopfpumpe <span class="lv">${S.pumps} Stück</span></b><small>Fördert immer, auch wenn du offline bist · +$${6*(1+Math.floor((S.pumps+1)/10)*.5)}/s${(S.pumps+1)%10===0?' · 10er-Bonus!':''}</small></div><button class="buy ${S.money>=pc?'':'no'}" data-pump="1">${fmt(pc)}</button></div>`;
+ $('uMis').innerHTML=S.missions.map(m=>`<div class="mis"><div class="t"><span>${m.done?'✅ ':''}${MT[m.t].txt(m.n)}</span><i>${m.done?'erledigt':(m.t==='earn'?fmt(m.p)+' / '+fmt(m.n):m.p+'/'+m.n)}</i></div><div class="bar"><div style="width:${Math.round(m.p/m.n*100)}%"></div></div><div style="font-size:12px;color:#ffd54a;margin-top:2px">Belohnung ${fmt(m.r)}</div></div>`).join('');
+ updMoney();
+}
+let lastPrice=oilPrice().p,lastPriceT=0;
+function updMoney(){
+ $('uMoney').textContent=fmt(S.money);
+ $('uRate').textContent=S.pumps?`Pumpen: +${fmt(pumpRate())}/s`:'Noch keine Pumpen';
+ const op=oilPrice();$('uPrice').textContent='$'+op.p.toFixed(2).replace('.',',')+' '+(op.p>=lastPrice?'▲':'▼');
+ $('uPrice').className=op.p>=lastPrice?'up':'down';$('uBoom').classList.toggle('hidden',!op.boom);
+ document.querySelectorAll('#uUp .buy,#uPump .buy').forEach(b=>{if(b.classList.contains('max'))return;const c=b.dataset.up?upCost(UPS.find(u=>u.id===b.dataset.up),S.up[b.dataset.up]):pumpCost(S.pumps);b.classList.toggle('no',S.money<c)});
+}
+$('hub').addEventListener('click',e=>{
+ const b=e.target.closest('.buy');if(!b)return;
+ if(b.dataset.up){const u=UPS.find(x=>x.id===b.dataset.up),l=S.up[u.id];if(l>=MAXL)return;const c=upCost(u,l);
+  if(S.money<c){toast(`Dir fehlen noch ${fmt(c-S.money)}`);return}S.money-=c;S.up[u.id]++;sfx.buy();buzz(15);toast(`${u.n} → Stufe ${S.up[u.id]}`)}
+ else{const c=pumpCost(S.pumps);if(S.money<c){toast(`Dir fehlen noch ${fmt(c-S.money)}`);return}S.money-=c;S.pumps++;sfx.buy();buzz(15);toast(S.pumps%10===0?'10er-Bonus: alle Pumpen +50 %!':'Neue Pumpe gebaut!')}
+ save();renderHub();
+});
+function openHub(){state='hub';if(!G||G.mode!=='idle'){const c=G?G.cam:-H*.3;newWorld();G.cam=c}refill();renderHub();show('hub')}
+
+let countAnim=0;
+function showSummary(){
+ state='sum';
+ const op=oilPrice(),oil=Math.round(G.barrels*op.p),total=oil+G.treasure;
+ const depth=Math.floor(G.maxDepth),rec=depth>S.best;
+ if(rec)S.best=depth;
+ S.money+=total;S.runs++;S.earned+=total;mProg('earn',total,true);save();
+ $('sWhy').textContent=G.why;$('sEm').textContent=G.why==='Diesel leer'?'⛽':G.why==='Bohrkopf kaputt'?'💥':'🛑';
+ $('sRec').classList.toggle('hidden',!rec);
+ $('sLines').innerHTML=`<div><span>Tiefe</span><b>${depth} m</b></div><div><span>Öl: ${G.barrels} Barrel × $${op.p.toFixed(2).replace('.',',')}${op.boom?' 🔥':''}</span><b>${fmt(oil)}</b></div>`+(G.tCount?`<div><span>Schätze (${G.tCount})</span><b>${fmt(G.treasure)}</b></div>`:'')+(G.maxStreak>1?`<div><span>Beste Serie</span><b>×${(1+.2*Math.min(G.maxStreak-1,10)).toFixed(1).replace('.',',')}</b></div>`:'');
+ // Hinweis aufs nächste Upgrade
+ const cheapest=UPS.filter(u=>S.up[u.id]<MAXL).map(u=>({u,c:upCost(u,S.up[u.id])})).sort((a,b)=>a.c-b.c)[0];
+ const afford=UPS.filter(u=>S.up[u.id]<MAXL&&S.money>=upCost(u,S.up[u.id])).length;
+ $('sHint').textContent=afford?'🔧 Du kannst dir ein Upgrade leisten!':cheapest?`Noch ${fmt(cheapest.c-S.money)} bis ${cheapest.u.n} Stufe ${S.up[cheapest.u.id]+1}`:'';
+ $('bShop').classList.toggle('pulse',afford>0);
+ show('sum');
+ const t0=performance.now();cancelAnimationFrame(countAnim);let lastTick=0;
+ const step=now=>{const k=Math.min(1,(now-t0)/900);$('sTotal').textContent='+'+fmt(total*(1-Math.pow(1-k,3)));if(now-lastTick>70&&k<1){sfx.tick();lastTick=now}if(k<1)countAnim=requestAnimationFrame(step);else if(total>0)sfx.cash()};
+ countAnim=requestAnimationFrame(step);
+ if(S.tut<1)S.tut=1;
+}
+
+/* ---------- Tagesbonus & Offline ---------- */
+const queue=[];
+function info(em,title,html,btn,cb){queue.push({em,title,html,btn,cb})}
+function nextInfo(){const q=queue.shift();if(!q){openHub();return}$('iEm').textContent=q.em;$('iT').textContent=q.title;$('iB').innerHTML=q.html;$('bInfo').textContent=q.btn;$('bInfo').onclick=()=>{ac();q.cb&&q.cb();sfx.cash();nextInfo()};show('info')}
+function dayStr(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function checkStart(){
+ const now=Date.now(),away=Math.min(4*3600,(now-S.seen)/1000);
+ if(S.pumps>0&&away>60){const g=Math.round(pumpRate()*away);
+  info('🛢️','Willkommen zurück!',`<div class="hint">Deine ${S.pumps} Pumpe${S.pumps>1?'n haben':' hat'} in ${away>=3600?Math.floor(away/3600)+' h '+Math.floor(away%3600/60)+' min':Math.floor(away/60)+' min'} gefördert:</div><div class="total">+${fmt(g)}</div><div style="font-size:13px;opacity:.7;margin-top:4px">Max. 4 Stunden – schau öfter vorbei!</div>`,'KASSIEREN',()=>{S.money+=g;save()})}
+ const d=new Date(),today=dayStr(d);
+ if(S.lastDay!==today){
+  const y=new Date(d);y.setDate(y.getDate()-1);
+  S.streak=S.lastDay===dayStr(y)?S.streak+1:1;S.lastDay=today;
+  const amt=Math.round((600+S.pumps*300+S.best*3)*Math.min(S.streak,7)/10)*10;
+  let st='<div class="streak">';for(let i=1;i<=7;i++)st+=`<span class="${i<=Math.min(S.streak,7)?'on':''}">${i===7?'🌟':i}</span>`;st+='</div>';
+  info('🎁','Tagesbonus',st+`<div class="hint">Tag ${S.streak} in Folge</div><div class="total">+${fmt(amt)}</div><div style="font-size:13px;opacity:.7;margin-top:4px">Komm morgen wieder – der Bonus wächst!</div>`,'EINSAMMELN',()=>{S.money+=amt;save()});
+ }
+ save();nextInfo();
+}
+
+/* ---------- Eingabe ---------- */
+cv.addEventListener('pointerdown',e=>{touch.on=true;touch.x=e.clientX;if(e.cancelable)e.preventDefault()},{passive:false});
+cv.addEventListener('pointermove',e=>{if(touch.on)touch.x=e.clientX});
+const up=()=>{touch.on=false};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.addEventListener('pointerleave',up);
+addEventListener('keydown',e=>{if(state!=='play')return;if(e.code==='ArrowLeft'){touch.on=true;touch.x=0}if(e.code==='ArrowRight'){touch.on=true;touch.x=W}});
+addEventListener('keyup',e=>{if(e.code==='ArrowLeft'||e.code==='ArrowRight')touch.on=false});
+$('bDrill').onclick=startRun;
+$('bAgain').onclick=()=>{cancelAnimationFrame(countAnim);startRun()};
+$('bShop').onclick=()=>{cancelAnimationFrame(countAnim);openHub()};
+$('bSound').onclick=()=>{S.sound=!S.sound;save();renderHub();if(S.sound){ac();sfx.coin()}};
+$('pause').onclick=()=>{if(state==='play'){paused=true;humStop();show('pauseOv')}};
+$('bResume').onclick=()=>{paused=false;show(null);if(G.mode==='run')humStart()};
+$('bQuit').onclick=()=>{paused=false;show(null);endRun('Abgebrochen')};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){save();if(state==='play'&&G.mode==='run'&&!paused){paused=true;humStop();show('pauseOv')}}});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+
+/* ---------- Schleife ---------- */
+let lastT=performance.now(),acc=0,saveT=0,uiT=0;
+function frame(now){
+ const dt=Math.min(.033,(now-lastT)/1000);lastT=now;
+ // passives Einkommen läuft immer
+ if(S.pumps){acc+=pumpRate()*dt;if(acc>=1){const w=Math.floor(acc);S.money+=w;acc-=w}}
+ saveT+=dt;if(saveT>5){saveT=0;save()}
+ uiT+=dt;if(uiT>.25&&state==='hub'){uiT=0;updMoney();if(now-lastPriceT>8000){lastPrice=oilPrice().p;lastPriceT=now}}
+ if(G&&!paused)update(dt);
+ draw();
+ requestAnimationFrame(frame);
+}
+resize();newWorld();
+checkStart();
+requestAnimationFrame(frame);
+window.__oel={get G(){return G},get S(){return S},get state(){return state},touch};
+})();
+</script>
+</body>
+</html>
