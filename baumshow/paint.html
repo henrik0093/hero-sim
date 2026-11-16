@@ -90,7 +90,7 @@ function paint(e,cx,cy,r){const r2=r*r;let ch=0;const y0=Math.max(0,Math.floor(c
 function splat(x,y,col,n){for(let i=0;i<n;i++){const a=Math.random()*6.283,s=2+Math.random()*9;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:col,r:.15+Math.random()*.3})}}
 function start(){
   own=new Int8Array(TOT).fill(-1);cnt=new Int32Array(8);for(let i=0;i<TOT;i++){const k=i*4,c=((i%N)+Math.floor(i/N))%2?238:246;img.data[k]=c;img.data[k+1]=c+4;img.data[k+2]=255;img.data[k+3]=255}
-  const order=[PEOPLE.find(p=>p.id===me),...PEOPLE.filter(p=>p.id!==me)];const sk=[.78,.82,.86,.9,.94,.98,1.02].sort(()=>Math.random()-.5);const off=Math.random()*6.283;
+  const order=[PEOPLE.find(p=>p.id===me),...PEOPLE.filter(p=>p.id!==me)];const sk=[.9,.94,.98,1.02,1.06,1.1,1.14].sort(()=>Math.random()-.5);const off=Math.random()*6.283;
   E=order.map((p,i)=>{const a=off+i/8*6.283;return {i,id:p.id,name:p.name,color:p.color,rgb:hex(p.color),x:N/2+Math.cos(a)*33,y:N/2+Math.sin(a)*33,a:a+Math.PI,boost:0,big:0,stun:0,hurt:0,noHit:0,bot:i>0,tx:N/2,ty:N/2,tt:0,skill:i?sk[i-1]:1,wob:Math.random()*6}});
   pl=E[0];rush=false;items=[];parts=[];time=DUR;cd=3.2;itemT=1.5;shake=0;jx=jy=0;lastTick=99;dirty=true;state='count';T0=performance.now();
   for(const e of E)paint(e,e.x,e.y,4);
@@ -99,9 +99,9 @@ function start(){
   if(!MUTE){mus.currentTime=0;mus.play().catch(()=>{})}
 }
 function retarget(e){let bx=N/2,by=N/2,bs=-1e9;
-  for(const it of items){const d=Math.hypot(it.x-e.x,it.y-e.y);if(d<18*e.skill){e.tx=it.x;e.ty=it.y;e.tt=2;return}}
+  for(const it of items){const d=Math.hypot(it.x-e.x,it.y-e.y);if(d<26*e.skill){e.tx=it.x;e.ty=it.y;e.tt=2;return}}
   for(let k=0;k<14;k++){const a=Math.random()*6.283,r=6+Math.random()*24,x=Math.max(2,Math.min(N-2,e.x+Math.cos(a)*r)),y=Math.max(2,Math.min(N-2,e.y+Math.sin(a)*r));let s=-r*.25;
-    for(let q=0;q<5;q++){const px=Math.floor(x+(Math.random()-.5)*9),py=Math.floor(y+(Math.random()-.5)*9);if(px<0||py<0||px>=N||py>=N)continue;const o=own[py*N+px];s+=o===e.i?-2:o<0?2:3}
+    for(let q=0;q<5;q++){const px=Math.floor(x+(Math.random()-.5)*9),py=Math.floor(y+(Math.random()-.5)*9);if(px<0||py<0||px>=N||py>=N)continue;const o=own[py*N+px];s+=o===e.i?-2:o<0?2:o===0?4.5:3}
     if(s>bs){bs=s;bx=x;by=y}}
   e.tx=bx;e.ty=by;e.tt=1.2+Math.random()*1.5}
 function pick(e,it){
