@@ -44,7 +44,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
 <div id="toast"></div>
 <div id="menu" class="screen">
   <div class="logo">Farb<span>SCHLACHT</span></div>
-  <div class="sub" style="text-align:left;font-size:15px;max-width:340px"><b>Das Spiel:</b> Du bist ein Pinsel und färbst Delbrück in deiner Farbe. Zieh mit dem Finger, wohin du laufen willst. Die anderen sieben übermalen dich. Sammle Extras: 🎨 Farbbombe, ⚡ Tempo, 🖌️ Riesenpinsel, ❄️ Einfrieren, 🚀 Farbrakete. Wer einen anderen Pinsel rammt, ist 5 Sekunden langsam.<br><br><b>Punkte:</b> Es zählt dein Anteil an der Fläche in Prozent nach 60 Sekunden.<br><br><b>Der Preis:</b> Die besten drei der Woche bekommen 3, 2 und 1 Pokal-Punkt. Wer nach allen vier Adventswochen vorn liegt, bekommt bei der Baumshow am 28.12. den Pokal und einen Preis.</div>
+  <div class="sub" style="text-align:left;font-size:15px;max-width:340px"><b>Das Spiel:</b> Du bist ein Pinsel und färbst Delbrück in deiner Farbe. Zieh mit dem Finger, wohin du laufen willst. Die anderen sieben übermalen dich. Sammle Extras: 🎨 Farbbombe, ⚡ Tempo, 🖌️ Riesenpinsel, ❄️ Einfrieren, 🚀 Farbrakete. Wer einen anderen Pinsel rammt, ist 5 Sekunden langsam.<br><br><b>Punkte:</b> 10 Punkte pro Prozent Fläche nach 60 Sekunden. Dazu 300, 150 oder 75 Punkte für Platz 1, 2 oder 3 in der Runde und 50 Punkte, wenn du ohne Unfall durchkommst.<br><br><b>Der Preis:</b> Die besten drei der Woche bekommen 3, 2 und 1 Pokal-Punkt. Wer nach allen vier Adventswochen vorn liegt, bekommt bei der Baumshow am 28.12. den Pokal und einen Preis.</div>
   <button class="btn" id="go">LOS</button>
   <a class="back" href="index.html">← zurück zum Menü</a>
   <div id="mpBox" style="margin-top:16px;width:100%;max-width:340px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.1)"></div>
@@ -98,7 +98,8 @@ function splat(x,y,col,n){for(let i=0;i<n;i++){const a=Math.random()*6.283,s=2+M
 let net=null,joinRoom=new URLSearchParams(location.search).get('room'),gone={},iid=0,netT=0,lastSt=0,pendInv=[];
 const FL=e=>(e.boost>0?1:0)|(e.big>0?2:0)|(e.hurt>0?4:0)|(e.stun>0?8:0),R1=v=>Math.round(v*10)/10;
 function applyEnts(arr){for(const [i,x,y,a,f] of arr){const e=E[i];if(!e)continue;if(e===pl){if(net&&!net.host&&!net.got){pl.x=x;pl.y=y;pl.a=a;net.got=true}continue}if(net.host&&!e.remote)continue;if(e.nx==null){e.x=x;e.y=y}e.nx=x;e.ny=y;e.na=a;e.boost=f&1?.4:0;e.big=f&2?.4:0;e.hurt=f&4?.4:0;if(f&8)e.stun=Math.max(e.stun,.3)}}
-function crashFx(a,b){a.hurt=b.hurt=5;a.noHit=b.noHit=1.5;a.stun=b.stun=.8;const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;fx.push({x:mx,y:my,r:1,m:8,l:1,c:'#ffffff'},{x:mx,y:my,r:.5,m:5,l:1,c:'#ffd54a'});splat(mx,my,'#b9793f',16);splat(mx,my,'#ffd54a',10);splat(mx,my,'#ffffff',14);if(a===pl||b===pl){shake=12;tone(140,.3,'square',.09,60);toast('💥 UNFALL! Pinsel kaputt','#ff8a9a')}}
+let crashed=false;
+function crashFx(a,b){if(a===pl||b===pl)crashed=true;a.hurt=b.hurt=5;a.noHit=b.noHit=1.5;a.stun=b.stun=.8;const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;fx.push({x:mx,y:my,r:1,m:8,l:1,c:'#ffffff'},{x:mx,y:my,r:.5,m:5,l:1,c:'#ffd54a'});splat(mx,my,'#b9793f',16);splat(mx,my,'#ffd54a',10);splat(mx,my,'#ffffff',14);if(a===pl||b===pl){shake=12;tone(140,.3,'square',.09,60);toast('💥 UNFALL! Pinsel kaputt','#ff8a9a')}}
 function netStart(){net=null;if(!window.MP||!MP.ready)return;const host=!joinRoom,code=joinRoom||me;joinRoom=null;$('go').textContent='LOS';
   net={host,code,got:false,ch:null};lastSt=performance.now();
   if(!host){state='wait';for(const e of E)if(e!==pl){e.bot=false;e.remote=true}toast('Verbinde …')}
@@ -126,7 +127,7 @@ function start(){
   FREE=0;for(let i=0;i<TOT;i++){const k=i*4;if(block[i]){img.data[k]=205;img.data[k+1]=191;img.data[k+2]=164}else{FREE++;img.data[k]=240;img.data[k+1]=245;img.data[k+2]=255}img.data[k+3]=255}
   const order=PEOPLE.slice();const sk=[.84,.88,.92,.96,1,1.03,1.06].sort(()=>Math.random()-.5);const off=0;
   E=order.map((p,i)=>{const a=off+i/8*6.283;return {i,id:p.id,name:p.name,color:p.color,rgb:hex(p.color),x:N/2+Math.cos(a)*33,y:N/2+Math.sin(a)*33,a:a+Math.PI,boost:0,big:0,stun:0,hurt:0,noHit:0,bot:p.id!==me,remote:false,nx:null,ny:null,na:0,tx:N/2,ty:N/2,tt:0,skill:sk[i%7],wob:Math.random()*6}});
-  pl=E.find(e=>e.id===me);gone={};iid=0;rush=false;fx=[];items=[];parts=[];time=DUR;cd=3.2;itemT=1.5;shake=0;jx=jy=0;lastTick=99;dirty=true;state='count';T0=performance.now();
+  pl=E.find(e=>e.id===me);crashed=false;gone={};iid=0;rush=false;fx=[];items=[];parts=[];time=DUR;cd=3.2;itemT=1.5;shake=0;jx=jy=0;lastTick=99;dirty=true;state='count';T0=performance.now();
   for(const e of E)paint(e,e.x,e.y,4);
   $('bars').innerHTML=E.map(e=>'<i style="background:'+e.color+';width:12.5%"></i>').join('');
   $('menu').classList.add('hidden');$('over').classList.add('hidden');$('hud').classList.remove('hidden');
@@ -147,11 +148,11 @@ function pick(e,it){
   else if(it.t===1){e.boost=4;if(e===pl){toast('⚡ TEMPO!','#7dffb0');tone(600,.25,'triangle',.08,1400)}}
   else{e.big=5;if(e===pl){toast('🖌️ RIESENPINSEL!','#9fd0ff');tone(400,.25,'triangle',.08,900)}}}
 function end(){
-  state='over';mus.pause();netEnd();const rk=E.slice().sort((a,b)=>cnt[b.i]-cnt[a.i]),r=rk.indexOf(pl)+1,pct=cnt[pl.i]*100/FREE,score=Math.round(pct*10);
+  state='over';mus.pause();netEnd();const rk=E.slice().sort((a,b)=>cnt[b.i]-cnt[a.i]),r=rk.indexOf(pl)+1,pct=cnt[pl.i]*100/FREE,rb=[300,150,75][r-1]||0,cb=crashed?0:50,score=Math.min(1000,Math.round(pct*10)+rb+cb);
   const bk='bb_paint_best_'+me,old=lsGet(bk,0);if(score>old)lsSet(bk,score);
   [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*110));
-  setTimeout(()=>{$('hud').classList.add('hidden');$('over').classList.remove('hidden');$('oWhy').textContent=r===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=pct.toFixed(1).replace('.',',')+' %';
-    $('oSub').textContent='Platz '+r+' von 8'+(score>old?' · neuer Rekord!':' · dein Rekord: '+(old/10).toLocaleString('de-DE')+' %');
+  setTimeout(()=>{$('hud').classList.add('hidden');$('over').classList.remove('hidden');$('oWhy').textContent=r===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=score+' P.';
+    $('oSub').innerHTML=pct.toFixed(1).replace('.',',')+' % Fläche = '+Math.round(pct*10)+' P.<br>Platz '+r+' von 8 = +'+rb+' P.<br>'+(crashed?'Unfall gebaut = +0 P.':'Ohne Unfall = +50 P.')+'<br>'+(score>old?'Neuer Rekord!':'Dein Rekord: '+old+' P.');
     $('oList').innerHTML=rk.map((e,i)=>'<div class="row'+(e===pl?' mine':'')+'"><b>'+(i+1)+'</b><i style="background:'+e.color+'"></i><span>'+e.name+'</span><b>'+(cnt[e.i]*100/FREE).toFixed(1).replace('.',',')+' %</b></div>').join('');$('oBest').textContent=''},700);
   sendScore('paint',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML=m},900));
 }

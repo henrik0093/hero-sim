@@ -535,7 +535,7 @@ function floatText(x,y,z,txt,col,size){
 function banner(t,s){$('bTitle').textContent=t;$('bSub').textContent=s||'';$('bSub').style.display=s?'':'none';const b=$('banner');b.classList.add('on');clearTimeout(banner.h);banner.h=setTimeout(()=>b.classList.remove('on'),1700)}
 function hudStatic(){$('hLevel').innerHTML=(G.level%5===0?'👹 ':'')+'Level '+G.level+' · '+ORTE[(G.level-1)%ORTE.length]+'<i id="prog"><b id="progB"></b></i>'}
 function updHud(){$('hScore').textContent=G.score.toLocaleString('de-DE');$('hHearts').textContent=(G.wpn?'⚡'+G.wpn+' ':'')+(G.spread?'🌟 ':'')+'🛡️'.repeat(G.shield)+' 🪙'+(coins);const bb=$('bomb');bb.classList.toggle('hidden',!(G.bombs>0)||G.state==='pick'||G.state==='over'||G.state==='won');bb.textContent='💥'+(G.bombs>1?' '+G.bombs:'');chase()}
-function chase(){const el=$('champ'),r=ranking().filter(x=>x.id!==me&&x.s>0);if(!r.length||G.state==='pick'||G.state==='over'){el.classList.add('hidden');return}el.classList.remove('hidden');
+function chase(){const el=$('champ'),r=ranking().filter(x=>x.id!==me&&x.s>0);if(GNOW!=='run'||!r.length||G.state==='pick'||G.state==='over'){el.classList.add('hidden');return}el.classList.remove('hidden');
   const live=G.tot0+Math.max(G.old,G.score),top=r[0];
   if(live>top.s){$('champFill').style.width='100%';$('champLbl').textContent='👑 Du führst · +'+(live-top.s).toLocaleString('de-DE')+' vor '+P[top.id].name;
     if(!G.passed&&G.tot0+G.old<=top.s){G.passed=true;banner('👑 PLATZ 1!','Du hast '+P[top.id].name+' überholt');flash('#ffd54a');[784,988,1175,1568].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*90))}}
@@ -733,7 +733,7 @@ function loop(now){
 
 // ================= Rangliste / Screens =================
 function bestOf(id){const r=(board.best||[]).find(x=>x.player===id);return r?r.score:0}
-function ranking(){return PEOPLE.map(p=>({id:p.id,s:p.id===me?Math.max(bestOf(me),total()):bestOf(p.id)})).sort((a,b)=>b.s-a.s)}
+function ranking(){return PEOPLE.map(p=>({id:p.id,s:p.id===me&&GNOW==='run'?Math.max(bestOf(me),total()):bestOf(p.id)})).sort((a,b)=>b.s-a.s)}
 function todayKing(){const t=board.today||[];return t.length?t[0].player:null}
 function boardHTML(){const r=ranking(),king=todayKing();
   return '<h3><span>Rangliste</span><span>👑 Tagesbester</span></h3>'+r.map((x,i)=>'<div class="row'+(x.id===me?' mine':'')+'"><span class="rk">'+(x.s>0?(i===0?'🏆':i+1):'')+'</span>'+avHTML(x.id)+'<span class="n">'+P[x.id].name+(x.id===king?' 👑':'')+'</span><span class="s">'+(x.s>0?x.s.toLocaleString('de-DE'):'–')+'</span></div>').join('')}
@@ -747,6 +747,8 @@ function modesHTML(){const done=PEOPLE.filter(p=>p.id!==me).reduce((a,p)=>a+Math
   return '<h3><span>Weitere Spielmodi</span><span></span></h3><a class="mode'+(m2?'':' lock')+'" '+(m2?'href="arena.html'+location.search+'"':'')+'>'+(m2?'⚔️':'🔒')+' <b>Modus 2: Delbrück erobern</b><br><small>'+(m2?'Arena gegen die anderen 7':'Erst jede Burg 2x erobern ('+done+'/14)')+'</small></a><a class="mode'+(m3?'':' lock')+'" '+(m3?'href="loch.html'+location.search+'"':'')+'>'+(m3?'🕳️':'🔒')+' <b>Modus 3: Schneeloch</b><br><small>'+(m3?'Schluck alles, was kleiner ist':'Erst in der Arena 25 % der Karte erobern')+'</small></a>'}
 const WEEKS=[{from:'2026-11-29',t:'Wichtel-Sturm',ic:'🏃',d:'Laufen, schießen, Burg stürmen'},{from:'2026-12-06',t:'Schneeloch',ic:'🕳️',d:'Schluck alles, was kleiner ist',href:'loch.html'},{from:'2026-12-13',t:'Delbrück erobern',ic:'⚔️',d:'Arena gegen die anderen 7',href:'arena.html'},{from:'2026-12-20',t:'Farbschlacht',ic:'🎨',d:'Färbe Delbrück in deiner Farbe',href:'paint.html'}];
 function weekNow(){const t=new Date();let w=-1;WEEKS.forEach((x,i)=>{if(t>=new Date(x.from+'T00:00:00'))w=i});return w}
+function adv(){const t=new Date(),k=t.getFullYear()+'-'+(t.getMonth()+1)+'-'+t.getDate(),i=['2026-11-29','2026-12-6','2026-12-13','2026-12-20'].indexOf(k);return i<0?'':'🕯️ Frohen '+(i+1)+'. Advent! · '}
+const GNOW=['run','loch','arena','paint'][Math.max(0,weekNow())];
 function weeksHTML(){const w=weekNow(),all=location.search.includes('alles'),cw=Math.max(0,w);
   return '<h3><span>Advents-Plan: jede Woche ein neues Spiel</span><span></span></h3>'+WEEKS.map((x,i)=>{const open=true,dt=new Date(x.from+'T00:00:00'),ds=dt.getDate()+'.'+(dt.getMonth()+1)+'.';
     const st=w>=0&&i===w?'läuft diese Woche':w<0||i>w?'Wertung ab '+ds+' · zum Testen offen':'offen';
@@ -766,13 +768,13 @@ function socialHTML(){const r=ranking().filter(x=>x.s>0),t=board.taunt,top=r[0];
 function checkLead(){const r=ranking().filter(x=>x.s>0),top=r[0],k='bb_lead_'+SEA+me,prev=lsGet(k,null);if(!top||!me)return;
   if(prev&&prev===me&&top.id!==me)overMsg='😱 '+P[top.id].name+' hat dich von Platz 1 verdrängt! Hol ihn dir zurück.';else if(prev&&prev!==top.id&&top.id!==me)overMsg='👀 '+P[top.id].name+' führt jetzt die Rangliste an.';
   if(prev!==top.id)lsSet(k,top.id)}
-function bindSocial(){const tb=$('tBtn');if(tb)tb.onclick=async()=>{const v=$('tIn').value.trim();if(!v)return;tb.disabled=true;try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,game:'run',taunt:v})});const j=await r.json();if(j.ok&&j.board){board=j.board;lsSet('bb_board',board)}else{tb.textContent='Nur für Platz 1'}}catch(e){}renderLists()}}
+function bindSocial(){const tb=$('tBtn');if(tb)tb.onclick=async()=>{const v=$('tIn').value.trim();if(!v)return;tb.disabled=true;try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,game:GNOW,taunt:v})});const j=await r.json();if(j.ok&&j.board){board=j.board;lsSet('bb_board',board)}else{tb.textContent='Nur für Platz 1'}}catch(e){}renderLists()}}
 function loadImg(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
 async function makeCert(){const r=ranking().filter(x=>x.s>0).slice(0,3);if(!r.length){alert('Noch keine Punkte in der Rangliste.');return}
   const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,1350);gr.addColorStop(0,'#17347a');gr.addColorStop(1,'#0a1638');g.fillStyle=gr;g.fillRect(0,0,1080,1350);
   for(let i=0;i<140;i++){g.fillStyle='rgba(255,255,255,'+(.3+Math.random()*.6)+')';g.beginPath();g.arc(Math.random()*1080,Math.random()*1350,1+Math.random()*4,0,7);g.fill()}
   g.textAlign='center';g.fillStyle='#fff';g.font='700 84px Fredoka, sans-serif';g.fillText('Baumshow',540,130);g.fillStyle='#ffd54a';g.font='700 104px Fredoka, sans-serif';g.fillText('BATTLE',540,232);
-  const w=weekNow();g.fillStyle='#cfe0ff';g.font='600 44px Fredoka, sans-serif';g.fillText((w<0?'Aufwärm-Runde':(w+1)+'. Advent')+' · Wichtel-Sturm',540,310);
+  const w=weekNow();g.fillStyle='#cfe0ff';g.font='600 44px Fredoka, sans-serif';g.fillText((w<0?'Aufwärm-Runde':(w+1)+'. Advent')+' · '+WEEKS[Math.max(0,w)].t,540,310);
   const X=[540,230,850],H=[330,240,180],COL=['#ffd54a','#cfd6e2','#d9955a'],base=1070;
   for(let i=0;i<r.length;i++){const p=P[r[i].id],x=X[i],top=base-H[i];g.fillStyle=COL[i];g.beginPath();g.roundRect(x-150,top,300,H[i]+60,24);g.fill();g.fillStyle='rgba(0,0,0,.18)';g.fillRect(x-150,top+H[i]+10,300,50);
     g.fillStyle='#3a2400';g.font='700 120px Fredoka, sans-serif';g.fillText(String(i+1),x,top+130);
@@ -784,7 +786,7 @@ async function makeCert(){const r=ranking().filter(x=>x.s>0).slice(0,3);if(!r.le
   $('certClose').onclick=()=>$('certView').classList.add('hidden');
   $('certShare').onclick=async()=>{try{const bl=await (await fetch(url)).blob(),f=new File([bl],'baumshow-battle.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Baumshow Battle'})}else{const a=document.createElement('a');a.href=url;a.download='baumshow-battle.png';a.click()}}catch(e){}}}
 function chaseHTML(){const r=ranking().filter(x=>x.s>0),hd='<h3><span>Jagd auf Platz 1</span><span>🏆</span></h3>';if(!r.length)return hd+'<div class="note" style="margin:4px 0">Noch hat niemand Punkte. Leg vor!</div>';
-  const top=r[0],mine=Math.max(bestOf(me),total());
+  const top=r[0],mine=GNOW==='run'?Math.max(bestOf(me),total()):bestOf(me);
   if(top.id===me){const s=r[1];return hd+'<div class="chase">'+avHTML(me)+'<span><b>Du hast den Pokal in der Hand.</b><br><small>'+(s?P[s.id].name+' fehlen '+(mine-s.s+1).toLocaleString('de-DE')+' Punkte':'Die anderen müssen erst noch ran.')+'</small></span></div>'}
   return hd+'<div class="chase">'+avHTML(top.id)+'<span><b>'+P[top.id].name+' führt mit '+top.s.toLocaleString('de-DE')+'</b><br><small>Dir fehlen '+(top.s-mine+1).toLocaleString('de-DE')+' Punkte bis Platz 1</small></span></div><i class="cbar"><b style="width:'+Math.round(100*mine/top.s)+'%"></b></i>'}
 function dayStr(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
@@ -799,11 +801,11 @@ function renderLists(){
   const pg=$('pickGrid');pg.innerHTML='';
   PEOPLE.forEach(p=>{const b=document.createElement('button');b.className='pick';b.innerHTML=avHTML(p.id)+p.name;b.onclick=()=>{me=p.id;lsSet('bb_me',me);myBest=0;lsSet('bb_best4',0);showScreen('start')};pg.appendChild(b)});
 }
-async function fetchBoard(){try{const r=await fetch(API+'?game=run',{cache:'no-store'});if(!r.ok)throw 0;board=await r.json();lsSet('bb_board',board);renderLists();return true}catch(e){return false}}
+async function fetchBoard(){try{const r=await fetch(API+'?game='+GNOW,{cache:'no-store'});if(!r.ok)throw 0;board=await r.json();lsSet('bb_board',board);renderLists();return true}catch(e){return false}}
 async function submit(score,level,dur){
   const pend=lsGet('bb_pending',[]);pend.push({player:me,score,level,duration_ms:Math.round(dur),game:'run'});
   let ok=false;const rest=[];
-  for(const s of pend){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const j=await r.json();if(j.ok){ok=true;if(j.board){if(board.taunt&&!j.board.taunt)j.board.taunt=board.taunt;board=j.board;lsSet('bb_board',board)}}else if(j.error==='too_fast')rest.push(s)}catch(e){rest.push(s)}}
+  for(const s of pend){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const j=await r.json();if(j.ok){ok=true;if(j.board&&GNOW==='run'){if(board.taunt&&!j.board.taunt)j.board.taunt=board.taunt;board=j.board;lsSet('bb_board',board)}}else if(j.error==='too_fast')rest.push(s)}catch(e){rest.push(s)}}
   lsSet('bb_pending',rest.slice(-5));return ok;
 }
 function showScreen(id){
@@ -815,7 +817,7 @@ function showScreen(id){
 function countdown(){
   const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const d=Math.round((new Date(now.getFullYear(),11,28)-today)/864e5);const el=$('countdown');
-  el.textContent=d<0?'Die Baumshow ist vorbei. Glückwunsch an den Pokalsieger! 🏆':d===0?'🏆 Heute ist Pokalvergabe! Letzte Chance!':'🏆 Pokalvergabe bei der Baumshow in '+d+' Tag'+(d>1?'en':'');
+  el.textContent=d<0?'Die Baumshow ist vorbei. Glückwunsch an den Pokalsieger! 🏆':d===0?'🏆 Heute ist Pokalvergabe! Letzte Chance!':adv()+'Noch '+d+' Tag'+(d>1?'e':'')+' bis zur Baumshow! (28.12.2026)';
 }
 function starStr(n){return '★'.repeat(n)+'☆'.repeat(3-n)}
 function showResult(){

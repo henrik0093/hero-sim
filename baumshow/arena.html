@@ -49,9 +49,10 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
 <div id="toast"></div>
 <div id="menu" class="screen">
   <div class="logo">Delbrück<span>EROBERN</span></div>
-  <div class="sub" style="text-align:left;font-size:15px;max-width:340px"><b>Das Spiel:</b> Lauf aus deinem Gebiet heraus, zieh eine Schleife und komm zurück. Alles, was du umrundest, gehört dir. Fährt jemand durch deine offene Spur, bist du raus und fängst klein wieder an. Du kannst auch die Spuren der anderen durchkreuzen.<br><br><b>Punkte:</b> Es zählt dein größtes Gebiet in Prozent, das du in den 90 Sekunden einmal hattest.<br><br><b>Der Preis:</b> Die besten drei der Woche bekommen 3, 2 und 1 Pokal-Punkt. Wer nach allen vier Adventswochen vorn liegt, bekommt bei der Baumshow am 28.12. den Pokal und einen Preis.</div>
+  <div class="sub" style="text-align:left;font-size:15px;max-width:340px"><b>Das Spiel:</b> Lauf aus deinem Gebiet heraus, zieh eine Schleife und komm zurück. Alles, was du umrundest, gehört dir. Fährt jemand durch deine offene Spur, bist du raus und fängst klein wieder an. Du kannst auch die Spuren der anderen durchkreuzen.<br><br><b>Punkte:</b> 10 Punkte pro Prozent deines größten Gebiets in den 90 Sekunden. Dazu 300, 150 oder 75 Punkte für Platz 1, 2 oder 3 am Ende und 20 Punkte pro Rauswurf.<br><br><b>Der Preis:</b> Die besten drei der Woche bekommen 3, 2 und 1 Pokal-Punkt. Wer nach allen vier Adventswochen vorn liegt, bekommt bei der Baumshow am 28.12. den Pokal und einen Preis.</div>
   <button class="btn" id="go">LOS</button>
   <a class="back" href="index.html">← zurück zum Menü</a>
+  <div id="mpBox" style="margin-top:16px;width:100%;max-width:340px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.1)"></div>
 </div>
 <div id="over" class="screen hidden">
   <div class="sub" id="oWhy"></div>
@@ -61,6 +62,7 @@ a.back{color:#a9cbff;margin-top:16px;font-size:15px}
   <button class="btn" id="again">NOCHMAL</button>
   <a class="back" href="index.html">← zurück zum Menü</a>
 </div>
+<script type="module" src="snd/mp.js"></script>
 <script src="snd/xmas.js"></script>
 <script src="snd/board.js"></script>
 <script type="module">
@@ -94,7 +96,7 @@ function paintMap(){for(let k=0;k<TOT;k++){const o=owner[k],t=trail[k],q=k*4;let
 function spawn(e){let x,y,k=0,ok;do{x=rnd(9,N-9);y=rnd(9,N-9);ok=true;for(const o of E)if(o!==e&&o.alive&&Math.hypot(o.x-x,o.y-y)<22-k*.2)ok=false;if(owner[Math.floor(y)*N+Math.floor(x)]>=0&&k<50)ok=false}while(!ok&&k++<90);
   e.x=x;e.y=y;e.a=Math.atan2(N/2-y,N/2-x)+rnd(-.6,.6);e.alive=true;e.cells=[];e.grace=1.2;e.mode='in';e.t=rnd(.3,1.2);e.hx=x;e.hy=y;
   for(let j=-4;j<=4;j++)for(let i=-4;i<=4;i++)if(i*i+j*j<=17){const c=(Math.floor(y)+j)*N+Math.floor(x)+i;if(trail[c]<0)owner[c]=e.i}dirty=true}
-function kill(v,by){if(!v.alive||v.grace>0||state!=='play')return;v.alive=false;v.resp=v===pl?1.6:2.5;
+function kill(v,by){if(!v.alive||v.grace>0||state!=='play')return;v.alive=false;v.resp=v===pl?1.6:2.5;if(net&&net.host)net.ch.send('kl',[v.i,by?by.i:-1]);
   for(const c of v.cells)if(trail[c]===v.i)trail[c]=-1;v.cells=[];for(let k=0;k<TOT;k++)if(owner[k]===v.i)owner[k]=-1;dirty=true;boom(v.x,v.y,v.color,46);
   if(by&&by!==v){by.kills++;if(by===pl){toast('💥 '+v.name+' ist raus!','#ffd54a');tone(300,.35,'square',.09,1000);shake=1}}
   if(v===pl){toast(by&&by!==v?'😵 '+by.name+' hat deine Spur gekreuzt!':'😵 In die eigene Spur gefahren!','#ff8a9a');tone(260,.5,'sawtooth',.1,50);shake=1.5}}
@@ -150,36 +152,69 @@ const pGeo=new THREE.BufferGeometry();pGeo.setAttribute('position',new THREE.Buf
 const pts=new THREE.Points(pGeo,new THREE.PointsMaterial({size:.7,vertexColors:true,transparent:true,depthWrite:false}));pts.frustumCulled=false;scene.add(pts);
 function boom(x,z,col,n){const c=new THREE.Color(col);for(let i=0;i<n&&PT.n<PN;i++){const k=PT.n++,a=Math.random()*6.283,s=rnd(2,11);PT.x[k]=x;PT.y[k]=1;PT.z[k]=z;PT.vx[k]=Math.cos(a)*s;PT.vz[k]=Math.sin(a)*s;PT.vy[k]=rnd(4,13);PT.l[k]=1;pGeo.attributes.color.setXYZ(k,c.r,c.g,c.b)}pGeo.attributes.color.needsUpdate=true}
 // ---------- Ablauf ----------
+let net=null,joinRoom=new URLSearchParams(location.search).get('room'),netT=0,lastSt=0,pendInv=[],gTick=0;
+const R1=v=>Math.round(v*10)/10;
+function rle(a){const o=[];let v=a[0],n=1;for(let i=1;i<a.length;i++){if(a[i]===v)n++;else{o.push(v,n);v=a[i];n=1}}o.push(v,n);return o}
+function netStart(){net=null;if(!window.MP||!MP.ready)return false;const host=!joinRoom,code=joinRoom||me;joinRoom=null;$('go').textContent='LOS';
+  net={host,code,ch:null,hx:null,hy:null};lastSt=performance.now();
+  net.ch=MP.room(code,{
+    ready(){if(net&&net.host){for(const id of pendInv)MP.invite(id,'arena',code);pendInv=[]}},
+    members(m){if(!net||!net.host||!E)return;for(const e of E){if(e===pl)continue;const hum=m.includes(e.id);if(hum&&!e.human){e.human=true;e.bot=false;e.speed=11;toast(e.name+' ist dabei!','#7dffb0')}else if(!hum&&e.human){e.human=false;e.bot=true;e.mode='back';e.t=0}}},
+    in(d){if(!net||!net.host)return;const e=E[d[0]];if(e&&e.human)e.ta=d[1]},
+    st(d){if(!net||net.host)return;lastSt=performance.now();time=d.t;if(d.s==='count'){if(state!=='count'){state='count';lastTick=99}cd=d.c}else if(d.s==='play'&&state!=='play'){state='play';lastTick=99}
+      for(const [i,x,y,a,al,gr,k] of d.e){const e=E[i];if(!e)continue;const was=e.alive;e.alive=!!al;e.grace=gr?1:0;e.kills=k;if(e===pl){net.hx=x;net.hy=y;if((!was&&e.alive)||Math.hypot(x-pl.x,y-pl.y)>6){pl.x=x;pl.y=y;pl.a=a;pl.ta=a}}else{if(e.nx==null||!was){e.x=x;e.y=y}e.nx=x;e.ny=y;e.a=a}}
+      if(d.g){let p=0;for(let q=0;q<d.g.length;q+=2){owner.fill(d.g[q],p,p+d.g[q+1]);p+=d.g[q+1]}}
+      trail.fill(-1);for(const e of E)e.cells=[];for(const tr of d.tr){const e=E[tr[0]];if(!e)continue;for(let q=1;q<tr.length;q++){trail[tr[q]]=tr[0];e.cells.push(tr[q])}}dirty=true},
+    kl(d){if(!net||net.host)return;const v=E[d[0]],by=E[d[1]];if(!v)return;boom(v.x,v.y,v.color,46);if(by&&by===pl&&v!==pl){toast('💥 '+v.name+' ist raus!','#ffd54a');tone(300,.35,'square',.09,1000);shake=1}if(v===pl){toast(by&&by!==v?'😵 '+by.name+' hat deine Spur gekreuzt!':'😵 In die eigene Spur gefahren!','#ff8a9a');tone(260,.5,'sawtooth',.1,50);shake=1.5}},
+    end(d){if(!net||net.host)return;end()}
+  });
+  MP.setStatus({game:'arena',room:code,playing:true});return !host}
+function netTick(dt){if(!net)return;netT-=dt;if(netT>0)return;netT=.1;gTick++;
+  if(net.host){const d={t:R1(time),s:state,c:R1(cd),e:E.map(e=>[e.i,R1(e.x),R1(e.y),Math.round(e.a*100)/100,e.alive?1:0,e.grace>0?1:0,e.kills]),tr:E.filter(e=>e.alive&&e.cells.length).map(e=>[e.i].concat(e.cells))};if(gTick%2===0)d.g=rle(owner);net.ch.send('st',d)}
+  else{net.ch.send('in',[pl.i,Math.round(pl.ta*100)/100]);if(performance.now()-lastSt>6000){if(state==='wait'){const c=net.ch;net=null;c.leave();toast('Runde nicht gefunden. Du startest eine eigene.');start();return}toast('Verbindung zur Runde verloren','#ff8a9a');end()}}}
+function netEnd(){if(!net)return;const n=net;net=null;if(n.host)n.ch.send('end',0);setTimeout(()=>n.ch.leave(),600);if(window.MP)MP.setStatus({playing:false,room:null})}
+function clientUpdate(dt){
+  if(state==='count'){cd-=dt;const c=Math.ceil(cd-.2);if(c!==lastTick){lastTick=c;if(c>0){toast(String(c));tone(440,.15,'square',.06)}}}
+  time-=dt;if(Math.hypot(jx,jy)>.15)pl.ta=Math.atan2(jy,jx);
+  if(pl.alive&&state==='play'){let da=pl.ta-pl.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;pl.a+=Math.max(-7*dt,Math.min(7*dt,da));pl.x=Math.max(.6,Math.min(N-.6,pl.x+Math.cos(pl.a)*pl.speed*dt));pl.y=Math.max(.6,Math.min(N-.6,pl.y+Math.sin(pl.a)*pl.speed*dt));if(net.hx!=null){pl.x+=(net.hx-pl.x)*Math.min(1,dt*4);pl.y+=(net.hy-pl.y)*Math.min(1,dt*4)}}
+  for(const e of E)if(e!==pl&&e.nx!=null){const k=Math.min(1,dt*12);e.x+=(e.nx-e.x)*k;e.y+=(e.ny-e.y)*k}
+  partTick(dt);netTick(dt);if(net&&state==='play')hudTick(dt)}
 function start(){
-  owner.fill(-1);trail.fill(-1);const order=[PEOPLE.find(p=>p.id===me),...PEOPLE.filter(p=>p.id!==me)];
-  E=order.map((p,i)=>({i,id:p.id,name:p.name,color:p.color,rgb:hex(p.color),bot:i>0,alive:false,kills:0,resp:0,x:0,y:0,a:0,ta:0,cells:[],speed:i?rnd(10,10.9):11,skill:rnd(.6,1),hunter:Math.random()<.8,grace:0}));
-  pl=E[0];for(const e of E)spawn(e);pl.grace=2;buildActors();
-  time=DUR;best=0;shake=0;jx=jy=0;lastTick=99;cd=3.2;PT.n=0;state='count';T0=performance.now();dirty=true;
+  owner.fill(-1);trail.fill(-1);const order=PEOPLE.slice();
+  E=order.map((p,i)=>({i,id:p.id,name:p.name,color:p.color,rgb:hex(p.color),bot:p.id!==me,human:false,nx:null,ny:null,alive:false,kills:0,resp:0,x:0,y:0,a:0,ta:0,cells:[],speed:p.id!==me?rnd(10,10.9):11,skill:rnd(.6,1),hunter:Math.random()<.8,grace:0}));
+  pl=E.find(e=>e.id===me);const cli=netStart();if(!cli){for(const e of E)spawn(e);pl.grace=2}buildActors();
+  time=DUR;best=0;shake=0;jx=jy=0;lastTick=99;cd=3.2;PT.n=0;state='count';T0=performance.now();dirty=true;if(cli){state='wait';toast('Verbinde …')}
   $('menu').classList.add('hidden');$('over').classList.add('hidden');$('hud').classList.remove('hidden');$('mini').classList.remove('hidden');
   if(!MUTE){Xmas.rate(1);Xmas.start(2)}
 }
 function end(){
-  state='over';Xmas.stop();const pct=Math.max(best,count(0)*100/TOT),score=Math.min(1000,Math.round(pct*10)),rk=E.slice().sort((a,b)=>count(b.i)-count(a.i)).indexOf(pl)+1;
-  const bk='bb_arena_best_'+me,old=lsGet(bk,0);if(pct>old)lsSet(bk,Math.round(pct*10)/10);[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*110));
-  setTimeout(()=>{for(const id of ['hud','mini','stick'])$(id).classList.add('hidden');$('tags').innerHTML='';$('warn').style.opacity=0;$('over').classList.remove('hidden');$('oWhy').textContent=rk===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=pct.toFixed(1).replace('.',',')+' %';
-    $('oSub').textContent='Dein größtes Gebiet · am Ende Platz '+rk+' von 8 · '+pl.kills+' Rauswürfe'+(pct>old?' · neuer Rekord!':' · dein Rekord: '+String(old).replace('.',',')+' %');$('oBest').textContent=''},800);
+  state='over';Xmas.stop();netEnd();const pct=Math.max(best,count(pl.i)*100/TOT),rk=E.slice().sort((a,b)=>count(b.i)-count(a.i)).indexOf(pl)+1,rb=[300,150,75][rk-1]||0,score=Math.min(1000,Math.round(pct*10)+rb+pl.kills*20);
+  const bk='bb_arena_pts_'+me,old=lsGet(bk,0);if(score>old)lsSet(bk,score);[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,'triangle',.08),i*110));
+  setTimeout(()=>{for(const id of ['hud','mini','stick'])$(id).classList.add('hidden');$('tags').innerHTML='';$('warn').style.opacity=0;$('over').classList.remove('hidden');$('oWhy').textContent=rk===1?'🏆 Delbrück gehört dir!':'Zeit abgelaufen';$('oPct').textContent=score+' P.';
+    $('oSub').innerHTML='Größtes Gebiet '+pct.toFixed(1).replace('.',',')+' % = '+Math.round(pct*10)+' P.<br>Am Ende Platz '+rk+' von 8 = +'+rb+' P.<br>'+pl.kills+' Rauswürfe = +'+pl.kills*20+' P.<br>'+(score>old?'Neuer Rekord!':'Dein Rekord: '+old+' P.');$('oBest').textContent=''},800);
   sendScore('arena',score).then(m=>setTimeout(()=>{if(m)$('oBest').innerHTML=m},1000));
 }
+function partTick(dt){
+  for(let k=0;k<PT.n;k++){PT.vy[k]-=30*dt;PT.x[k]+=PT.vx[k]*dt;PT.y[k]+=PT.vy[k]*dt;PT.z[k]+=PT.vz[k]*dt;PT.l[k]-=dt*1.2;if(PT.l[k]<=0||PT.y[k]<0){const l=--PT.n;for(const a of ['x','y','z','vx','vy','vz','l'])PT[a][k]=PT[a][l];pGeo.attributes.color.setXYZ(k,pGeo.attributes.color.getX(l),pGeo.attributes.color.getY(l),pGeo.attributes.color.getZ(l));k--}}
+}
 function update(dt){
-  if(state==='count'){cd-=dt;const c=Math.ceil(cd-.2);if(c!==lastTick){lastTick=c;if(c>0){toast(String(c));tone(440,.15,'square',.06)}else{toast('LOS!','#ffd54a');tone(880,.3,'square',.08)}}if(cd<=.2){state='play';lastTick=99}return}
+  if(net&&!net.host){clientUpdate(dt);return}
+  if(state==='count'){cd-=dt;const c=Math.ceil(cd-.2);if(c!==lastTick){lastTick=c;if(c>0){toast(String(c));tone(440,.15,'square',.06)}else{toast('LOS!','#ffd54a');tone(880,.3,'square',.08)}}if(cd<=.2){state='play';lastTick=99}netTick(dt);return}
   if(state!=='play')return;
   time-=dt;if(time<=10){const c=Math.ceil(time);if(c!==lastTick&&c>0){lastTick=c;tone(900,.08,'square',.05);Xmas.rate(1.22)}}if(time<=0){time=0;end();return}
   for(const e of E){
     if(!e.alive){e.resp-=dt;if(e.resp<=0){spawn(e);if(e===pl){e.grace=2;jx=jy=0;toast('Weiter geht’s!','#7dffb0')}}continue}
     e.grace-=dt;
-    if(e.bot)botAI(e,dt);else if(Math.hypot(jx,jy)>.15)e.ta=Math.atan2(jy,jx);
+    if(e.bot)botAI(e,dt);else if(e===pl&&Math.hypot(jx,jy)>.15)e.ta=Math.atan2(jy,jx);
     let da=e.ta-e.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;e.a+=Math.max(-7*dt,Math.min(7*dt,da));
     const steps=2,sp=e.speed*dt/steps;for(let s=0;s<steps&&e.alive;s++){const pc=Math.floor(e.y)*N+Math.floor(e.x);e.x=Math.max(.6,Math.min(N-.6,e.x+Math.cos(e.a)*sp));e.y=Math.max(.6,Math.min(N-.6,e.y+Math.sin(e.a)*sp));const c=Math.floor(e.y)*N+Math.floor(e.x);if(c!==pc)stepCell(e,c)}
   }
-  for(let k=0;k<PT.n;k++){PT.vy[k]-=30*dt;PT.x[k]+=PT.vx[k]*dt;PT.y[k]+=PT.vy[k]*dt;PT.z[k]+=PT.vz[k]*dt;PT.l[k]-=dt*1.2;if(PT.l[k]<=0||PT.y[k]<0){const l=--PT.n;for(const a of ['x','y','z','vx','vy','vz','l'])PT[a][k]=PT[a][l];pGeo.attributes.color.setXYZ(k,pGeo.attributes.color.getX(l),pGeo.attributes.color.getY(l),pGeo.attributes.color.getZ(l));k--}}
+  partTick(dt);
   let danger=0;if(pl.alive&&pl.cells.length)for(const o of E){if(o===pl||!o.alive)continue;for(let q=0;q<pl.cells.length;q+=3){const c=pl.cells[q];if(Math.hypot(c%N-o.x,Math.floor(c/N)-o.y)<7){danger=1;break}}if(danger)break}
   warnT+=dt;$('warn').style.opacity=danger?(.5+.5*Math.sin(warnT*14)):0;
-  hudT-=dt;if(hudT<=0){hudT=.25;const cs=E.map(e=>count(e.i)),rk=E.slice().sort((a,b)=>cs[b.i]-cs[a.i]),p=cs[0]*100/TOT;best=Math.max(best,p);$('pct').textContent=p.toFixed(1).replace('.',',')+' %';$('time').textContent='⏱ '+Math.ceil(time);$('time').classList.toggle('hot',time<=10);
+  netTick(dt);hudTick(dt);
+}
+function hudTick(dt){hudT-=dt;if(hudT<=0){hudT=.25;const cs=E.map(e=>count(e.i)),rk=E.slice().sort((a,b)=>cs[b.i]-cs[a.i]),p=cs[pl.i]*100/TOT;best=Math.max(best,p);$('pct').textContent=p.toFixed(1).replace('.',',')+' %';$('time').textContent='⏱ '+Math.ceil(time);$('time').classList.toggle('hot',time<=10);
     $('top3').innerHTML=rk.slice(0,3).map((h,i)=>(h===pl?'<b>':'')+(i+1)+'. '+h.name+' '+(cs[h.i]*100/TOT).toFixed(1).replace('.',',')+(h===pl?'</b>':'')).join('<br>')+(rk.indexOf(pl)>2?'<br><b>'+(rk.indexOf(pl)+1)+'. '+pl.name+' '+p.toFixed(1).replace('.',',')+'</b>':'')+'<br><small style="opacity:.8">Bestwert '+best.toFixed(1).replace('.',',')+'</small>';
     const mc=$('mini').getContext('2d');mc.drawImage(small,0,0);if(pl.alive){mc.fillStyle='#111';mc.fillRect(pl.x-3,pl.y-3,6,6);mc.fillStyle='#fff';mc.fillRect(pl.x-2,pl.y-2,4,4)}}
 }
@@ -202,7 +237,8 @@ tg.fillStyle='#eef4fc';tg.fillRect(0,0,N*UP,N*UP);
 let last=performance.now();
 function loop(now){let dt=(now-last)/1000;last=now;if(dt>.05)dt=.05;update(dt);render(now);requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
-window.__arena={get s(){return {state,time,pct:E?count(0)*100/TOT:0,best,alive:pl?pl.alive:false,kills:E?E.map(e=>e.kills):[]}},set ta(d){jx=Math.cos(d);jy=Math.sin(d)}};
+(function mpI(){if(!window.MP){setTimeout(mpI,400);return}MP.init(me,PEOPLE);MP.mount($('mpBox'),'arena',{invite(id){if(net)MP.invite(id,'arena',net.code);else{pendInv.push(id);if(state==='menu'||state==='over'){audioOn();start()}}},join(r){joinRoom=r;audioOn();start()}});if(joinRoom)$('go').textContent='BEITRETEN'})();
+window.__arena={joy(x,y){jx=x;jy=y},get net(){return net?{host:net.host,code:net.code,hum:E.filter(e=>e.human||e===pl).map(e=>e.id),cells:E.map(e=>count(e.i)),pos:E.map(e=>Math.round(e.x)+','+Math.round(e.y))}:null},get s(){return {state,time,pct:E?count(pl.i)*100/TOT:0,best,alive:pl?pl.alive:false,kills:E?E.map(e=>e.kills):[]}},set ta(d){jx=Math.cos(d);jy=Math.sin(d)}};
 </script>
 </body>
 </html>
