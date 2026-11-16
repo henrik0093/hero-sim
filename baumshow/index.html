@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#7fb6ef">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="icon" href="img/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Baumshow">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Baumshow Battle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
@@ -122,6 +129,7 @@ html,body{height:100%;overflow:hidden;background:#7fb6ef;font-family:'Fredoka',s
   <div class="pill" id="countdown"></div>
   <div class="me" id="meBox"></div>
   <button class="btn" id="play">SPIELEN</button>
+  <button class="btn ghost hidden" id="play2" style="font-size:17px"></button>
   <button class="btn ghost hidden" id="daily" style="background:rgba(255,213,74,.22);color:#ffd54a;font-size:17px"></button>
   <div class="board" id="chaseBox"></div>
   <button class="btn ghost" id="cert" style="font-size:17px">📸 Sieger-Bild zum Teilen</button>
@@ -751,13 +759,13 @@ function adv(){const t=new Date(),k=t.getFullYear()+'-'+(t.getMonth()+1)+'-'+t.g
 const GNOW=['run','loch','arena','paint'][Math.max(0,weekNow())];
 function weeksHTML(){const w=weekNow(),all=location.search.includes('alles'),cw=Math.max(0,w);
   return '<h3><span>Advents-Plan: jede Woche ein neues Spiel</span><span></span></h3>'+WEEKS.map((x,i)=>{const open=true,dt=new Date(x.from+'T00:00:00'),ds=dt.getDate()+'.'+(dt.getMonth()+1)+'.';
-    const st=w>=0&&i===w?'läuft diese Woche':w<0||i>w?'Wertung ab '+ds+' · zum Testen offen':'offen';
+    const st=w>=0&&i===w?'läuft diese Woche':w<0||i>w?'Wertung ab '+ds+' · zum Testen offen':'Woche gewertet · weiter spielbar ohne Punkte';
     const inner=(open?x.ic:'🔒')+' <b>'+(i+1)+'. Advent: '+x.t+'</b><br><small>'+x.d+' · '+st+'</small>';
     return x.href&&open?'<a class="mode" href="'+x.href+location.search+'">'+inner+'</a>':'<div class="mode'+(open?' cur':' lock')+'">'+inner+'</div>'}).join('')}
 function pointsHTML(){const W=board.weeks||{},cur=board.week||0,pt={},det=[];
-  for(let w=1;w<=4;w++){const a=W[w]||[];if(!a.length)continue;a.slice(0,3).forEach((x,i)=>{pt[x.player]=(pt[x.player]||0)+3-i});det.push((w===cur?'läuft: ':'')+w+'. Advent '+a.slice(0,3).map((x,i)=>['🥇','🥈','🥉'][i]+(P[x.player]?P[x.player].name:'')).join(' '))}
+  for(let w=1;w<=4;w++){const a=W[w]||[];if(!a.length)continue;a.slice(0,3).forEach((x,i)=>{pt[x.player]=(pt[x.player]||0)+3-i+(i===0?.01:i===1?.0001:0)});det.push((w===cur?'läuft: ':'')+w+'. Advent '+a.slice(0,3).map((x,i)=>['🥇','🥈','🥉'][i]+(P[x.player]?P[x.player].name:'')).join(' '))}
   const r=PEOPLE.map(p=>({id:p.id,s:pt[p.id]||0})).sort((a,b)=>b.s-a.s).filter(x=>x.s>0);
-  return '<h3><span>Pokal-Wertung</span><span>Platz 1 = 3 · 2 = 2 · 3 = 1</span></h3>'+(r.length?r.map((x,i)=>'<div class="row'+(x.id===me?' mine':'')+'"><span class="rk">'+(i===0?'🏆':i+1)+'</span>'+avHTML(x.id)+'<span class="n">'+P[x.id].name+'</span><span class="s">'+x.s+' P.</span></div>').join('')+'<div class="note" style="margin:6px 0 10px">'+det.join('<br>')+'</div>':'<div class="note" style="margin:4px 0 10px">Jede Adventswoche gibt es Punkte für die Plätze 1 bis 3. Wer am 28.12. die meisten hat, bekommt den Pokal. Los geht es am 29.11.</div>')}
+  return '<h3><span>Pokal-Wertung</span><span>Platz 1 = 3 · 2 = 2 · 3 = 1</span></h3>'+(r.length?r.map((x,i)=>'<div class="row'+(x.id===me?' mine':'')+'"><span class="rk">'+(i===0?'🏆':i+1)+'</span>'+avHTML(x.id)+'<span class="n">'+P[x.id].name+'</span><span class="s">'+Math.floor(x.s)+' P.</span></div>').join('')+'<div class="note" style="margin:6px 0 10px">'+det.join('<br>')+'</div>':'<div class="note" style="margin:4px 0 10px">Jede Adventswoche gibt es Punkte für die Plätze 1 bis 3. Wer am 28.12. die meisten hat, bekommt den Pokal. Los geht es am 29.11.</div>')}
 let overMsg='';
 function esc(t){return String(t).replace(/[<>&"]/g,'')}
 function socialHTML(){const r=ranking().filter(x=>x.s>0),t=board.taunt,top=r[0];let h='';
@@ -794,7 +802,7 @@ function daily(){const b=$('daily'),s=lsGet('bb_day_'+me,{last:'',streak:0}),tod
   b.classList.toggle('hidden',!can);b.textContent='🎁 Tagesbonus: +'+amt+' 🪙 (Tag '+streak+')';
   b.onclick=()=>{coins+=amt;lsSet('bb_coins_'+SEA+me,coins);lsSet('bb_day_'+me,{last:today,streak});audioOn();[660,880,1320].forEach((f,i)=>setTimeout(()=>tone(f,.2,'triangle',.08),i*90));renderLists()}}
 function renderLists(){
-  if(me){loadMeta();$('play').textContent='LEVEL '+prog.level+' SPIELEN';$('missions').innerHTML=missionHTML();$('shop').innerHTML=shopHTML();if(PEOPLE.filter(p=>p.id!==me).every(p=>(wins[p.id]||0)>=2)&&!lsGet('bb_mpaid_'+me,false)){lsSet('bb_mpaid_'+me,true);coins+=300;lsSet('bb_coins_'+SEA+me,coins);$('shop').innerHTML=shopHTML()}$('weeks').innerHTML=pointsHTML()+weeksHTML();checkLead();$('chaseBox').innerHTML=socialHTML()+chaseHTML();bindSocial();$('cert').onclick=()=>{audioOn();makeCert()};daily();
+  if(me){loadMeta();{const wk=WEEKS[Math.max(0,weekNow())];$('play').textContent=GNOW==='run'?'LEVEL '+prog.level+' SPIELEN':wk.ic+' '+wk.t.toUpperCase()+' SPIELEN';$('play2').classList.toggle('hidden',GNOW==='run');$('play2').textContent='🏃 Wichtel-Sturm Level '+prog.level+' (ohne Wertung)'}$('missions').innerHTML=missionHTML();$('shop').innerHTML=shopHTML();if(PEOPLE.filter(p=>p.id!==me).every(p=>(wins[p.id]||0)>=2)&&!lsGet('bb_mpaid_'+me,false)){lsSet('bb_mpaid_'+me,true);coins+=300;lsSet('bb_coins_'+SEA+me,coins);$('shop').innerHTML=shopHTML()}$('weeks').innerHTML=pointsHTML()+weeksHTML();checkLead();$('chaseBox').innerHTML=socialHTML()+chaseHTML();bindSocial();$('cert').onclick=()=>{audioOn();makeCert()};daily();
     document.querySelectorAll('.buy').forEach(b=>b.onclick=()=>{const u=SHOP.find(x=>x.id===b.dataset.u),p=price(u);if(coins<p||perm[u.id]>=u.max)return;coins-=p;perm[u.id]++;lsSet('bb_coins_'+SEA+me,coins);lsSet('bb_perm_'+SEA+me,perm);audioOn();tone(880,.15,'triangle',.08);renderLists()})}
   $('board1').innerHTML=boardHTML();$('board2').innerHTML=boardHTML();
   if(me){$('meBox').innerHTML=avHTML(me)+'<span>'+P[me].name+'</span><button id="chg">ändern</button>';$('chg').onclick=()=>showScreen('who')}
@@ -851,7 +859,7 @@ function taunt(score){
   const a=r[i-1];return 'Noch '+(a.s-Math.max(score,mine)+1).toLocaleString('de-DE')+' Punkte bis '+P[a.id].name+' (Platz '+i+').';
 }
 function refreshAvatars(){scene.traverse(o=>{if(o.isSprite&&o.userData.av)o.material.map=avatarTexture(o.userData.av[0],o.userData.av[1])})}
-$('play').onclick=()=>{audioOn();newGame()};
+$('play').onclick=()=>{audioOn();if(GNOW==='run')newGame();else location.href=WEEKS[Math.max(0,weekNow())].href};$('play2').onclick=()=>{audioOn();newGame()};
 const mb=$('mute');const mset=()=>mb.textContent=MUTE?'🔇 Ton ist aus':'🔊 Ton ist an';mset();mb.onclick=()=>{MUTE=!MUTE;lsSet('bb_mute',MUTE);mset();if(MUTE)stopMus();else{audioOn();music(wantMus||'menu')}};
 $('again').onclick=()=>{audioOn();newGame()};
 $('toMenu').onclick=()=>showScreen('start');
