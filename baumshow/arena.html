@@ -110,7 +110,8 @@ function stepCell(e,c){const t=trail[c];
   if(owner[c]===e.i){if(e.cells.length)claim(e)}else if(trail[c]!==e.i){trail[c]=e.i;e.cells.push(c);dirty=true}}
 function botAI(e,dt){e.t-=dt;const c=Math.floor(e.y)*N+Math.floor(e.x),home=owner[c]===e.i;
   if(e.cells.length>2)for(const o of E){if(o===e||!o.alive)continue;if(Math.hypot(o.x-e.x,o.y-e.y)<7+e.cells.length*.12*(1.3-e.skill)){e.mode='back';break}}
-  if(e.hunter&&e.mode!=='back'){for(const o of E){if(o===e||!o.alive||!o.cells.length||(o===pl&&time>DUR-8))continue;const k=o.cells[o.cells.length>>1],tx=k%N+.5,ty=Math.floor(k/N)+.5,d=Math.hypot(tx-e.x,ty-e.y);if(d<13*e.skill+4){e.ta=Math.atan2(ty-e.y,tx-e.x);e.mode='hunt';e.t=.4;break}}}
+  {let bd=1e9,bx=0,by=0;for(const o of E){if(o===e||!o.alive||!o.cells.length||(o===pl&&time>DUR-5))continue;const R=(e.hunter?16:10)*e.skill+5+(o===pl?3:0);for(let q=0;q<o.cells.length;q+=2){const k=o.cells[q],tx=k%N+.5,ty=Math.floor(k/N)+.5,d=Math.hypot(tx-e.x,ty-e.y);if(d<R&&d<bd){bd=d;bx=tx;by=ty}}}
+    if(bd<1e9&&(e.mode!=='back'||bd<9)){e.ta=Math.atan2(by-e.y,bx-e.x);e.mode='hunt';e.t=.35}}
   if(e.mode==='in'){if(home)e.hx=e.x,e.hy=e.y;if(e.t<=0){e.mode='out';e.sgn=Math.random()<.5?1:-1;e.ta=e.a+rnd(-.5,.5);e.len=rnd(.5,1.5)*(.6+e.skill);e.t=e.len;e.leg=0}}
   else if(e.mode==='out'){if(e.t<=0){e.leg++;e.ta+=e.sgn*Math.PI/2;e.t=e.len*(e.leg===1?rnd(.6,1.2):1);if(e.leg>=2)e.mode='back'}}
   else if(e.mode==='back'){e.ta=Math.atan2(e.hy-e.y,e.hx-e.x);if(home&&!e.cells.length){e.mode='in';e.t=rnd(.2,.9);e.ta=e.a+rnd(-1,1)}}
